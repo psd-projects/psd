@@ -91,7 +91,7 @@ jobs:
       - name: Add the PSD Spack repository
         run: |
           git clone --depth 1 \
-            https://github.com/mohd-afeef-badri/spack_psd.git \
+            https://github.com/psd-projects/spack_psd.git \
             "$SPACK_PSD_ROOT"
           source "$SPACK_ROOT/share/spack/setup-env.sh"
           spack repo add "$SPACK_PSD_ROOT/spack_repo/psd"

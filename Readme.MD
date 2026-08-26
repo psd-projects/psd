@@ -1,6 +1,6 @@
-# <img width="100" align="left" src="./docs/psd_logo.jpg" /> [PSD v2.6](https://mohd-afeef-badri.github.io/psd)
+# <img width="100" align="left" src="./docs/psd_logo.jpg" /> [PSD v2.6](https://psd-projects.github.io/psd)
 
-[![UB26.04](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-mpich.yml/badge.svg)](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-mpich.yml) [![UB26.04-OpenMPI](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-openmpi.yml/badge.svg)](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-openmpi.yml) [![MacOs-26-openmpi](https://github.com/mohd-afeef-badri/psd/actions/workflows/MacOs-26.yml/badge.svg)](https://github.com/mohd-afeef-badri/psd/actions/workflows/MacOs-26.yml) [![UB26.04-Spack](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-spack.yml/badge.svg)](https://github.com/mohd-afeef-badri/psd/actions/workflows/Ub26-spack.yml)
+[![UB26.04](https://github.com/psd-projects/psd/actions/workflows/Ub26-mpich.yml/badge.svg)](https://github.com/psd-projects/psd/actions/workflows/Ub26-mpich.yml) [![UB26.04-OpenMPI](https://github.com/psd-projects/psd/actions/workflows/Ub26-openmpi.yml/badge.svg)](https://github.com/psd-projects/psd/actions/workflows/Ub26-openmpi.yml) [![MacOs-26-openmpi](https://github.com/psd-projects/psd/actions/workflows/MacOs-26.yml/badge.svg)](https://github.com/psd-projects/psd/actions/workflows/MacOs-26.yml) [![UB26.04-Spack](https://github.com/psd-projects/psd/actions/workflows/Ub26-spack.yml/badge.svg)](https://github.com/psd-projects/psd/actions/workflows/Ub26-spack.yml)
 
 
 **PSD** (*P*arallel finite element *S*olver for continuum *D*ynamics) is a high-performance finite element solver for solid mechanics applications. Designed for large-scale simulations, PSD is capable of solving problems with *billions of unknowns* in both *static* and *dynamic* regimes, with support for *linear* and *nonlinear* models.
@@ -35,17 +35,17 @@ A **sequential version** of the solver is also available and does **not require 
 
 ## 🔧 Installation
 
-Refer to the [installation guide here](https://mohd-afeef-badri.github.io/psd/#/install).
+Refer to the [installation guide here](https://psd-projects.github.io/psd/#/install).
 
 ## 📚 Tutorials
 
 Explore tutorials for different physics modules:
 
-- [Linear Elasticity](https://mohd-afeef-badri.github.io/psd/#/linear-elasticity)
-- [Fracture Mechanics](https://mohd-afeef-badri.github.io/psd/#/fracture-mechanics)
-- [Elastodynamics](https://mohd-afeef-badri.github.io/psd/#/elastodynamics)
-- [Soildynamics](https://mohd-afeef-badri.github.io/psd/#/soildynamics)
-- [Elasto-plasticity](https://mohd-afeef-badri.github.io/psd/#/elasto-plastic)
+- [Linear Elasticity](https://psd-projects.github.io/psd/#/linear-elasticity)
+- [Fracture Mechanics](https://psd-projects.github.io/psd/#/fracture-mechanics)
+- [Elastodynamics](https://psd-projects.github.io/psd/#/elastodynamics)
+- [Soildynamics](https://psd-projects.github.io/psd/#/soildynamics)
+- [Elasto-plasticity](https://psd-projects.github.io/psd/#/elasto-plastic)
 
 ## Quick Start: Typical Workflow of a PSD Simulation
 
@@ -97,6 +97,6 @@ Final step is to have a look at the results of the simulation. PSD can provides 
 
 ## Contributing & Community
 We welcome contributions to PSD! To ensure a smooth collaboration and maintain the high standards required for parallel FEM solvers, please follow these guidelines:
-- Contributing: Please read and follow [CONTRIBUTING.md](https://github.com/mohd-afeef-badri/psd/blob/community_code_of_conduct/CONTRIBUTING.md) in order to contribute to PSD.
-- Community: We follow the [CODE_OF_CONDUCT.md](https://github.com/mohd-afeef-badri/psd/blob/community_code_of_conduct/CODE_OF_CONDUCT.md) to ensure a welcoming and professional environment for all researchers and developers.
-- Issues: If you find a bug or have a feature request, please open an entry in the [Issue Tracker](https://github.com/mohd-afeef-badri/psd/issues).
+- Contributing: Please read and follow [CONTRIBUTING.md](https://github.com/psd-projects/psd/blob/community_code_of_conduct/CONTRIBUTING.md) in order to contribute to PSD.
+- Community: We follow the [CODE_OF_CONDUCT.md](https://github.com/psd-projects/psd/blob/community_code_of_conduct/CODE_OF_CONDUCT.md) to ensure a welcoming and professional environment for all researchers and developers.
+- Issues: If you find a bug or have a feature request, please open an entry in the [Issue Tracker](https://github.com/psd-projects/psd/issues).

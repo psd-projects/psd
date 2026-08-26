@@ -78,7 +78,7 @@ PSD is a cross‑platform, MPI‑enabled high‑performance finite element solve
   - Obtain the latest version of PSD by cloning the git repository:
 
   <pre><code>
-  git clone https://github.com/mohd-afeef-badri/psd.git PSD-Sources
+  git clone https://github.com/psd-projects/psd.git PSD-Sources
   </code></pre>
 
 
@@ -161,7 +161,7 @@ PSD is a cross‑platform, MPI‑enabled high‑performance finite element solve
 
   **PSD installation via spack**
 
-  PSD can be installed using [spack](https://spack.io/), installation process is detailed [here](https://github.com/mohd-afeef-badri/spack_psd/tree/main#psd-spack-repository).
+  PSD can be installed using [spack](https://spack.io/), installation process is detailed [here](https://github.com/psd-projects/spack_psd/tree/main#psd-spack-repository).
 
   #### Configuration flags
 
