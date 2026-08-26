@@ -86,7 +86,7 @@
 
    -model              [string]     Model by which the problem is solved.
                                     Use hybrid_phase_field | pseudo_nonlinear
-                                    | Mazar | von_mises
+                                    | Mazar | von_mises | drucker_prager
 
   ----------------------------------------------------------------------------
         BOOLEAN type flags, these flags are like activaction switches

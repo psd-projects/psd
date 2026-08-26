@@ -40,7 +40,7 @@ writeHeader;
  "                                                                              \n"
  "  string ThName = \"../Meshes/"<<spc<<"D/quater_cylinder.msh\";               \n";
 
-  writeIt
+  if(Model=="von_mises") writeIt
   "                                                                              \n"
   "//============================================================================\n"
   "//                   ------- Material parameters -------                      \n"
@@ -68,6 +68,30 @@ writeHeader;
   "                                                                              \n"
   "  real Qlim = 2./sqrt(3.)*log(Re/Ri)*sig0; //  Limiting pressure              \n"
   "                                                                              \n"
+  "                                                                              \n";
+
+  if(Model=="drucker_prager") writeIt
+  "                                                                              \n"
+  "//============================================================================\n"
+  "// ------- Associated, perfectly plastic Drucker-Prager parameters -------    \n"
+  "// f = sqrt(J2) + dpEta*tr(sigma)/3 - dpC <= 0 (tension positive).             \n"
+  "// The eta/c mapping is the plane-strain approximation used by the reference.  \n"
+  "//============================================================================\n"
+  "                                                                              \n"
+  "  real E             = 1.e7,                                                  \n"
+  "       nu            = 0.48,                                                  \n"
+  "       cohesion      = 450.,                                                  \n"
+  "       frictionAngle = 20.*pi/180.;                                           \n"
+  "                                                                              \n"
+  "  real lambda = E*nu/((1.+nu)*(1.-2.*nu)),                                   \n"
+  "       mu     = E/(2.*(1.+nu)),                                               \n"
+  "       bulk   = E/(3.*(1.-2.*nu)),                                            \n"
+  "       dpEta  = 3.*tan(frictionAngle)                                         \n"
+  "                /sqrt(9.+12.*tan(frictionAngle)^2),                           \n"
+  "       dpC    = 3.*cohesion/sqrt(9.+12.*tan(frictionAngle)^2);                \n"
+  "                                                                              \n"
+  "  real footingWidth = 1.,                                                     \n"
+  "       maxSettlement = 0.03;                                                  \n"
   "                                                                              \n";
 
   if(useMfront){
@@ -100,7 +124,8 @@ writeHeader;
   "                                                                              \n"
   "  macro EpsNrCon  ()   1.e-8       //                                         \n"
   "  macro NrMaxItr  ()   200         //                                         \n"
-  "  macro TlMaxItr  ()   20          //                                         \n"
+  "  macro TlMaxItr  ()   "<<(Model=="drucker_prager" ? 12 : 20)<<"          // \n"
+  "  macro QFElastoPlastic "<<(Model=="drucker_prager" ? "FEQF5" : "FEQF2")<<" //\n"
   "                                                                              \n"
   "  real tl = 0.; // pseudo-time load factor, shared by all external loads     \n";
 
@@ -122,7 +147,7 @@ if(dirichletconditions>=1)
  "//       on that particular  direction (let it free)                          \n"
  "//============================================================================\n"
  "                                                                              \n";
- if(spc==2)
+ if(spc==2 && Model=="von_mises")
   for(int i=0; i<dirichletconditions; i++) {
    if(i==0) writeIt
    "  macro  Dbc0On 1   // y=0 symmetry boundary                               \n"
@@ -130,6 +155,26 @@ if(dirichletconditions>=1)
    else if(i==1) writeIt
    "  macro  Dbc1On 3   // x=0 symmetry boundary                               \n"
    "  macro  Dbc1Ux 0.  //                                                     \n";
+   else writeIt
+   "  macro  Dbc"<<i<<"On "<<labelDirichlet<<"   //                            \n"
+   "  macro  Dbc"<<i<<"Ux 0.  //                                               \n"
+   "  macro  Dbc"<<i<<"Uy 0.  //                                               \n";
+  }
+
+ if(spc==2 && Model=="drucker_prager")
+  for(int i=0; i<dirichletconditions; i++) {
+   if(i==0) writeIt
+   "  macro  Dbc0On 1   // bottom: vertical restraint                          \n"
+   "  macro  Dbc0Uy 0.  //                                                     \n";
+   else if(i==1) writeIt
+   "  macro  Dbc1On 2   // right side: horizontal restraint                    \n"
+   "  macro  Dbc1Ux 0.  //                                                     \n";
+   else if(i==2) writeIt
+   "  macro  Dbc2On 5   // left symmetry: horizontal restraint                 \n"
+   "  macro  Dbc2Ux 0.  //                                                     \n";
+   else if(i==3) writeIt
+   "  macro  Dbc3On 3                    // footing                             \n"
+   "  macro  Dbc3Uy -tl*maxSettlement    // prescribed settlement              \n";
    else writeIt
    "  macro  Dbc"<<i<<"On "<<labelDirichlet<<"   //                            \n"
    "  macro  Dbc"<<i<<"Ux 0.  //                                               \n"

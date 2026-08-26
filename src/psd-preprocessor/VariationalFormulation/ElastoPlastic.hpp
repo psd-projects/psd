@@ -22,7 +22,7 @@
  "$$                                                                                              \n"
  "*/                                                                                              \n"
  "                                                                                                \n"
- "      intN(Th,qforder=3)(                                                                       \n"
+ "      intN(Th,qforder="<<(Model=="drucker_prager" ? 5 : 3)<<")(                               \n"
  "                       epsilonXMt(du,Mt)'*epsilon(v)                                            \n"
  "                     )                                                                          \n"
  "                                                                                                \n";
@@ -37,7 +37,7 @@
  "$$                                                                                              \n"
  "*/                                                                                              \n"
  "                                                                                                \n"
- "     - intN(Th,qforder=2)(                                                                      \n"
+ "     - intN(Th,qforder="<<(Model=="drucker_prager" ? 5 : 2)<<")(                              \n"
  "                       [Sig11, Sig22, Sig12]'*epsilon(v)                                        \n"
  "                     )                                                                          \n";
 
@@ -93,4 +93,3 @@ for(int i=0; i<dirichletconditions; i++)
  writeIt
  ";                                                                                                \n"
   "                                                                                                \n";
-

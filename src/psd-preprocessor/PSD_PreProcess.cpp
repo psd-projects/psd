@@ -266,7 +266,8 @@ int main(int argc, char *argv[]){
   if(Prblm=="damage" && Model=="hybrid_phase_field")dirichletbc=true;
   if(Prblm=="damage" && Model=="Mazar")dirichletbc=true;
   if(Prblm=="soildynamics")dirichletconditions      = 0;
-  if(useMfront || (Prblm=="elasto_plastic" && Model=="von_mises"))
+  if(useMfront || (Prblm=="elasto_plastic" &&
+      (Model=="von_mises" || Model=="drucker_prager")))
     fastmethod = false;
   int labLface=2;if(spc==3)labLface=1;
   int labRface=4;if(spc==3)labRface=2;

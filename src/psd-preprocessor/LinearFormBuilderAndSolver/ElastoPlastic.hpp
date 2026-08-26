@@ -85,7 +85,7 @@ if(useMfront){
  "                                                                                \n";
 }
 
-if(!useMfront){
+if(!useMfront && Model=="von_mises"){
 codeSnippet R""""(
 
 if(mpirank==0)
@@ -295,6 +295,276 @@ if(mpirank==0)
   cout << "\n#-----------------------------------------------------------------\n" << endl;
 
 )"""";
+}
+
+if(!useMfront && Model=="drucker_prager"){
+codeSnippet R""""(
+
+if(mpirank==0) {
+  cout.precision(16);
+  cout << "DP_RESULT,step,settlement,normalized_pressure,newton_iterations,relative_residual"
+       << endl;
+}
+
+//==============================================================================
+//  ------------------------------------------------------------
+//  ------- Native Drucker-Prager algorithm -------
+//  ------------------------------------------------------------
+//    Loop 1 : TlMaxItr;             # Prescribed-settlement loop
+//      update_settlement();
+//      initialize_increment();      # Du = 0
+//      restore_converged_state();   # Stress and plastic strain
+//      initialize_elastic_tangent();
+//      assemble_linear_system();
+//      Loop 2 : NrMaxItr;           # Semismooth Newton loop
+//        solve_linear_system();
+//        update_increment();        # Du += du
+//        compute_total_strain();
+//        compute_elastic_trial_state();
+//        classify_elastic_smooth_or_apex_return();
+//        update_stress_and_plastic_strain();
+//        update_consistent_tangent();
+//        assemble_linear_system();
+//        exit_if_converged();
+//      commit_displacement_and_plastic_strain();
+//      calculate_footing_reaction();
+//  ------------------------------------------------------------
+//==============================================================================
+
+// Small-strain plane-strain associated perfect plasticity:
+//   f = sqrt(J2) + dpEta*tr(sigma)/3 - dpC <= 0.
+// Components are Kelvin/Mandel [xx,yy,zz,sqrt(2)xy]. The return mapping,
+// smooth/apex classification, and tangent match constitutive_problem.m from
+// Cermak, Sysala, and Valdman (2019).
+
+for (int i=0; i<TlMaxItr; i++) {
+
+  tl = real(i+1)/TlMaxItr;
+
+  startProcedure("increment initialization",t0)
+  Du[] = 0.;
+  du[] = 0.;
+  niter = 0;
+  endProcedure("increment initialization",t0)
+
+  startProcedure("converged state restoration",t0)
+  [Sig11,Sig22,Sig12] = [SigOld11,SigOld22,SigOld12];
+  Sig33 = SigOld33;
+  [Ep11,Ep22,Ep12] = [EpOld11,EpOld22,EpOld12];
+  Ep33 = EpOld33;
+  [Mt11,Mt12,Mt13,Mt22,Mt23,Mt33]
+      = [lambda+2.*mu,lambda,0.,lambda+2.*mu,0.,2.*mu];
+  endProcedure("converged state restoration",t0)
+
+  startProcedure("linear-system assembly",t0)
+  ALoc = elast(Vh,Vh,solver=CG,sym=1);
+  A = ALoc;
+  b = elast(0,Vh);
+  endProcedure("linear-system assembly",t0)
+
+  startProcedure("residual checking",t0)
+  b = b .* DP;
+  real resLoc = b.l2;
+  real resGather = 0.;
+  resLoc = resLoc*resLoc;
+  mpiAllReduce(resLoc,resGather,mpiCommWorld,mpiSUM);
+  nRes0 = sqrt(resGather);
+  nRes = nRes0;
+  endProcedure("residual checking",t0)
+
+  while(nRes/(nRes0+1.e-30) > EpsNrCon && niter < NrMaxItr) {
+    niter++;
+
+    startProcedure("linear-system solving",t0)
+    set(A,sparams=" -ksp_type cg -ksp_rtol 1e-11 ");
+    du[] = A^-1*b;
+    endProcedure("linear-system solving",t0)
+
+    startProcedure("increment update",t0)
+    Du[] += du[];
+    endProcedure("increment update",t0)
+
+    // Total plane-strain tensor at the current Newton iterate.
+    startProcedure("total strain computation",t0)
+    [Eps11,Eps22,Eps12] = epsilon(u);
+    [ElasticTrial11,ElasticTrial22,ElasticTrial12] = epsilon(Du);
+    [Eps11,Eps22,Eps12] = [Eps11+ElasticTrial11,
+                            Eps22+ElasticTrial22,
+                            Eps12+ElasticTrial12];
+    Eps33 = 0.;
+
+    // Elastic trial strain, deviator, trial stress, rho=||s||, and mean stress.
+    [ElasticTrial11,ElasticTrial22,ElasticTrial12] =
+      [Eps11-EpOld11,Eps22-EpOld22,Eps12-EpOld12];
+    ElasticTrial33 = Eps33-EpOld33;
+    meanElastic = (ElasticTrial11+ElasticTrial22+ElasticTrial33)/3.;
+    [DevElastic11,DevElastic22,DevElastic12] =
+      [ElasticTrial11-meanElastic,
+       ElasticTrial22-meanElastic,
+       ElasticTrial12];
+    DevElastic33 = ElasticTrial33-meanElastic;
+    normElastic = sqrt(max(0.,
+      ElasticTrial11*DevElastic11+ElasticTrial22*DevElastic22
+      +ElasticTrial33*DevElastic33+ElasticTrial12*DevElastic12));
+    rhoTrial = 2.*mu*normElastic;
+    pressureTrial = bulk*(ElasticTrial11+ElasticTrial22+ElasticTrial33);
+    [SigTrial11,SigTrial22,SigTrial12] =
+      [2.*mu*DevElastic11+pressureTrial,
+       2.*mu*DevElastic22+pressureTrial,
+       2.*mu*DevElastic12];
+    SigTrial33 = 2.*mu*DevElastic33+pressureTrial;
+    endProcedure("total strain computation",t0)
+
+    startProcedure("return branch classification",t0)
+    real denominatorApex = bulk*dpEta^2;
+    real denominatorSmooth = mu+denominatorApex;
+    criterion1 = rhoTrial/SQ2+dpEta*pressureTrial-dpC;
+    criterion2 = dpEta*pressureTrial
+                 -denominatorApex*rhoTrial/(mu*SQ2)-dpC;
+    plasticSwitch = (criterion1>0. ? 1. : 0.);
+    apexSwitch = plasticSwitch*(criterion2>0. ? 1. : 0.);
+    smoothSwitch = plasticSwitch-apexSwitch;
+    lambdaSmooth = smoothSwitch*criterion1/denominatorSmooth;
+    lambdaApex = apexSwitch*(dpEta*pressureTrial-dpC)/denominatorApex;
+    endProcedure("return branch classification",t0)
+
+    startProcedure("Drucker-Prager return mapping",t0)
+    [Normal11,Normal22,Normal12] =
+      [smoothSwitch*DevElastic11/(normElastic+1.e-30),
+       smoothSwitch*DevElastic22/(normElastic+1.e-30),
+       smoothSwitch*DevElastic12/(normElastic+1.e-30)];
+    Normal33 = smoothSwitch*DevElastic33/(normElastic+1.e-30);
+    [Correction11,Correction22,Correction12] =
+      [SQ2*mu*Normal11+smoothSwitch*bulk*dpEta,
+       SQ2*mu*Normal22+smoothSwitch*bulk*dpEta,
+       SQ2*mu*Normal12];
+    Correction33 = SQ2*mu*Normal33+smoothSwitch*bulk*dpEta;
+
+    [Sig11,Sig22,Sig12] =
+      [(1.-apexSwitch)*SigTrial11-lambdaSmooth*Correction11
+         +apexSwitch*dpC/dpEta,
+       (1.-apexSwitch)*SigTrial22-lambdaSmooth*Correction22
+         +apexSwitch*dpC/dpEta,
+       (1.-apexSwitch)*SigTrial12-lambdaSmooth*Correction12];
+    Sig33 = (1.-apexSwitch)*SigTrial33-lambdaSmooth*Correction33
+            +apexSwitch*dpC/dpEta;
+
+    [Ep11,Ep22,Ep12] =
+      [EpOld11+lambdaSmooth*(Normal11/SQ2+dpEta/3.)
+         +apexSwitch*(Eps11-dpC/(3.*bulk*dpEta)-EpOld11),
+       EpOld22+lambdaSmooth*(Normal22/SQ2+dpEta/3.)
+         +apexSwitch*(Eps22-dpC/(3.*bulk*dpEta)-EpOld22),
+       EpOld12+lambdaSmooth*Normal12/SQ2
+         +apexSwitch*(Eps12-EpOld12)];
+    Ep33 = EpOld33+lambdaSmooth*(Normal33/SQ2+dpEta/3.)
+           +apexSwitch*(Eps33-dpC/(3.*bulk*dpEta)-EpOld33);
+    endProcedure("Drucker-Prager return mapping",t0)
+
+    startProcedure("consistent tangent update",t0)
+    curvatureFactor = smoothSwitch*2.*SQ2*mu^2*lambdaSmooth/(rhoTrial+1.e-30);
+    [Mt11,Mt12,Mt13,Mt22,Mt23,Mt33] = (1.-apexSwitch)*[
+      lambda+2.*mu-curvatureFactor*(2./3.-Normal11^2)
+        -Correction11^2/denominatorSmooth,
+      lambda-curvatureFactor*(-1./3.-Normal11*Normal22)
+        -Correction11*Correction22/denominatorSmooth,
+      -curvatureFactor*(0.-Normal11*Normal12)
+        -Correction11*Correction12/denominatorSmooth,
+      lambda+2.*mu-curvatureFactor*(2./3.-Normal22^2)
+        -Correction22^2/denominatorSmooth,
+      -curvatureFactor*(0.-Normal22*Normal12)
+        -Correction22*Correction12/denominatorSmooth,
+      2.*mu-curvatureFactor*(1.-Normal12^2)
+        -Correction12^2/denominatorSmooth];
+    endProcedure("consistent tangent update",t0)
+
+    startProcedure("linear-system assembly",t0)
+    ALoc = elast(Vh,Vh,solver=CG,sym=1);
+    A = ALoc;
+    b = elast(0,Vh);
+    endProcedure("linear-system assembly",t0)
+
+    startProcedure("residual checking",t0)
+    b = b .* DP;
+    resLoc = b.l2;
+    resLoc = resLoc*resLoc;
+    mpiAllReduce(resLoc,resGather,mpiCommWorld,mpiSUM);
+    nRes = sqrt(resGather);
+    // The first assembled rhs contains the large algebraic enforcement of the
+    // non-zero footing displacement. Reset the Newton reference norm after that
+    // correction so convergence is measured using the physical equilibrium
+    // residual, not the Dirichlet penalty.
+    if(niter==1)
+      nRes0 = max(nRes,1.);
+    endProcedure("residual checking",t0)
+  }
+
+  if(nRes/(nRes0+1.e-30) > EpsNrCon) {
+    if(mpirank==0)
+      cout << "Error: native Drucker-Prager Newton iterations maxed out at step "
+           << i << endl;
+    exit(1202);
+  }
+
+  startProcedure("state commit",t0)
+  u[] += Du[];
+  [SigOld11,SigOld22,SigOld12] = [Sig11,Sig22,Sig12];
+  SigOld33 = Sig33;
+  [EpOld11,EpOld22,EpOld12] = [Ep11,Ep22,Ep12];
+  EpOld33 = Ep33;
+  endProcedure("state commit",t0)
+
+  // The virtual field is one on the footing's constrained vertical dofs and
+  // zero elsewhere, so internal virtual work gives the algebraic reaction.
+  real reactionLocal = intN(Th,qforder=5)(
+    [Sig11,Sig22,Sig12]'*epsilon(reactionTest));
+  real reactionGlobal = 0.;
+  mpiAllReduce(reactionLocal,reactionGlobal,mpiCommWorld,mpiSUM);
+  real normalizedPressure = -reactionGlobal/(footingWidth*cohesion);
+
+  if(mpirank==0)
+    cout.scientific << "DP_RESULT," << i+1 << "," << tl*maxSettlement << ","
+         << normalizedPressure << "," << niter << ","
+         << nRes/(nRes0+1.e-30) << endl;
+)"""";
+
+ if(ParaViewPostProcess){
+ writeIt
+ "                                                                                \n"
+ "  //-----------------ParaView plotting--------------//                          \n"
+ "                                                                                \n"
+ "  startProcedure(\"ParaView plotting\",t0)                                      \n";
+
+ writeIt
+ "    savevtk(  \"VTUs/Solution.vtu\"   ,                                         \n"
+ "                 Th                 ,                                           \n";
+
+ if(PostProcess=="u")
+ writeIt
+ "              PlotVec(u)        ,                                               \n"
+ "              dataname=\"U\"       ,                                            \n";
+
+ writeIt
+ "                 order=vtuorder     ,                                           \n"
+ "                 append=i ? true : false                                        \n"
+ "              );                                                                \n";
+
+ writeIt
+ "  endProcedure(\"ParaView plotting\",t0)                                        \n";
+
+ }
+
+ if(debug)
+ writeIt
+ "                                                                               \n"
+ "    //-------------Debug glut plotting------------------//                     \n"
+ "                                                                               \n"
+ "    macro viz(i)i//                                                            \n"
+ "    plotMPI(Th, u, P1,  viz, real, wait=0, cmm=\"displacement\")               \n"
+ "                                                                               \n";
+
+ writeIt
+ "}                                                                              \n";
+
 }
 
 if(useMfront){

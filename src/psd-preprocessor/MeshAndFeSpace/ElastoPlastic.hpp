@@ -99,13 +99,13 @@ if(!Sequential){
  "// ------- The finite element space  -------                                    \n"
  "// ---------------------------------------------------------------------------- \n"
  "//  Qh       : Quadratur finite element space  for material tensor              \n"
- "//             FEQF2 implies 3 dof for a triangular cell in the mesh            \n"
+ "//             QFElastoPlastic selects the model-specific quadrature rule       \n"
  "//             A vectorial FEM space is built with 6 components                 \n"
  "//==============================================================================\n"
  "                                                                                \n"
- " fespace Qh  ( Th ,[ FEQF2, FEQF2, FEQF2,                                       \n"
- "                            FEQF2, FEQF2,                                       \n"
- "                                   FEQF2] );                                    \n";
+ " fespace Qh  ( Th ,[ QFElastoPlastic, QFElastoPlastic, QFElastoPlastic,          \n"
+ "                                     QFElastoPlastic, QFElastoPlastic,          \n"
+ "                                                       QFElastoPlastic] );      \n";
 
  if(!useMfront && spc==2)
   writeIt
@@ -114,11 +114,10 @@ if(!Sequential){
  "// ------- The finite element space  -------                                    \n"
  "// ---------------------------------------------------------------------------- \n"
  "//  Ph       : Quadratur finite element space for plane-strain return           \n"
- "//             mapping. FEQF2 implies 3 dof for a  triangular cell in           \n"
- "//             the mesh. A vec FE space is built with 3 components              \n"
+ "//             mapping at the model-specific integration points                 \n"
  "//==============================================================================\n"
  "                                                                                \n"
- " fespace Ph  ( Th , FEQF2 );                                                    \n";
+ " fespace Ph  ( Th , QFElastoPlastic );                                          \n";
 
  if(spc==2)
   writeIt
@@ -127,22 +126,23 @@ if(!Sequential){
  "// ------- The finite element space  -------                                    \n"
  "// ---------------------------------------------------------------------------- \n"
  "//  Sh       : Quadratur finite element space  for Stress/Strain tensor         \n"
- "//             FEQF2 implies 3 dof for a triangular cell in the mesh            \n"
+ "//             using the model-specific quadrature rule                         \n"
  "//             A vectorial FEM space is built with 3 components                 \n"
  "//==============================================================================\n"
  "                                                                                \n"
- " fespace Sh  ( Th ,[ FEQF2, FEQF2, FEQF2]);                                     \n"
+ " fespace Sh  ( Th ,[ QFElastoPlastic, QFElastoPlastic, QFElastoPlastic]);       \n"
  "                                                                                \n"
  "//==============================================================================\n"
  "// ------- The finite element space  -------                                    \n"
  "// ---------------------------------------------------------------------------- \n"
  "//  Ih       : Quadratur finite element space  for internal state variables     \n"
- "//             FEQF2 implies 3 dof for a triangular cell in the mesh A vec-     \n"
- "//             torial FEM space is built  with  5 components.  To elaborate     \n"
+ "//             model-specific integration points. A vectorial space is built    \n"
+ "//             with 5 components. To elaborate                                  \n"
  "//             First 4 are elastic stains [Exx, Eyy, Ezz, Exy] + 1 plasticity   \n"
  "//==============================================================================\n"
  "                                                                                \n"
- " fespace Ih  ( Th ,[ FEQF2, FEQF2, FEQF2, FEQF2, FEQF2 ]);                      \n"
+ " fespace Ih  ( Th ,[ QFElastoPlastic, QFElastoPlastic, QFElastoPlastic,          \n"
+ "                       QFElastoPlastic, QFElastoPlastic ]);                      \n"
  "                                                                                \n";
 
  if(!fastmethod && spc==3)
