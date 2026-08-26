@@ -5,7 +5,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 
 ### Added
 
-- Spack based CI on GitHub, see spack recipie https://github.com/mohd-afeef-badri/spack_psd.git
+- Spack based CI on GitHub, see spack recipie https://github.com/psd-projects/spack_psd.git
 - Med 4.1.1 and HDF5 1.10.11 is now compiled with `--download-dependencies=yes`
 
 ### Changed
@@ -21,15 +21,15 @@ PSD has been maturing and evolving with time, following subsections present the 
   - PT-Scotch 7.0.11
 
 ### Bug
-- Pseudo-nonlinear elasticity with non-homogenous Dirichlet boundary coditions fixed [#75](https://github.com/mohd-afeef-badri/psd/pull/75)
+- Pseudo-nonlinear elasticity with non-homogenous Dirichlet boundary coditions fixed [#75](https://github.com/psd-projects/psd/pull/75)
 
 ## [2.6](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.6) - 06-07-2026
 
 ### Added
 
-- Documentation on [web](https://mohd-afeef-badri.github.io/psd/#/)
-- PSD [Docker](https://mohd-afeef-badri.github.io/psd/#/install?id=docker-image-for-psd)
-- PSD instllation via spack [package](https://github.com/mohd-afeef-badri/spack_psd)
+- Documentation on [web](https://psd-projects.github.io/psd/#/)
+- PSD [Docker](https://psd-projects.github.io/psd/#/install?id=docker-image-for-psd)
+- PSD instllation via spack [package](https://github.com/psd-projects/spack_psd)
 - 
 - New poisson model `-model poisson`
 - New adapt meshing support:

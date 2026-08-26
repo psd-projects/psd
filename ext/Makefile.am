@@ -131,13 +131,13 @@ MUMPS_DOWNLOAD = wget -c https://web.cels.anl.gov/projects/petsc/download/extern
 MUMPS_SEQ_DOWNLOAD = wget -c https://ftp.mcs.anl.gov/pub/petsc/externalpackages/MUMPS_$(MUMPS_SEQ_VERSION).tar.gz \
 			-O mumps-seq-$(MUMPS_SEQ_VERSION).tar.gz
 # Download METIS source code
-METIS_DOWNLOAD = wget -c  https://github.com/mohd-afeef-badri/psd-dependencies/raw/refs/heads/main/metis-$(METIS_VERSION).tar.gz \
+METIS_DOWNLOAD = wget -c  https://github.com/psd-projects/psd-dependencies/raw/refs/heads/main/metis-$(METIS_VERSION).tar.gz \
 			-O metis-$(METIS_VERSION).tar.gz
 # Download SLEPc source code
 SLEPC_DOWNLOAD = wget -c https://gitlab.com/slepc/slepc/-/archive/v$(SLEPC_VERSION)/slepc-v$(SLEPC_VERSION).tar.gz \
 			-O slepc-$(SLEPC_VERSION).tar.gz
 # Download ParMETIS source code
-PARMETIS_DOWNLOAD = wget -c https://github.com/mohd-afeef-badri/psd-dependencies/raw/refs/heads/main/parmetis-$(PARMETIS_VERSION).tar.gz \
+PARMETIS_DOWNLOAD = wget -c https://github.com/psd-projects/psd-dependencies/raw/refs/heads/main/parmetis-$(PARMETIS_VERSION).tar.gz \
 			-O parmetis-$(PARMETIS_VERSION).tar.gz
 # Download SCALAPACK source code
 SCALAPACK_DOWNLOAD = wget -c https://github.com/Reference-ScaLAPACK/scalapack/archive/v$(SCALAPACK_VERSION).tar.gz \
