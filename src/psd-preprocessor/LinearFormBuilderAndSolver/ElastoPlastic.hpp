@@ -302,8 +302,9 @@ codeSnippet R""""(
 
 if(mpirank==0) {
   cout.precision(16);
-  cout << "DP_RESULT,step,settlement,normalized_pressure,newton_iterations,relative_residual"
-       << endl;
+  cout << "-----------------------------------------------------------------" << endl;
+  cout << "TimeStep\tSettlement\tPressure\tNRiterations\tRelResidual" << endl;
+  cout << "-----------------------------------------------------------------" << endl;
 }
 
 //==============================================================================
@@ -333,20 +334,20 @@ if(mpirank==0) {
 
 // Small-strain plane-strain associated perfect plasticity:
 //   f = sqrt(J2) + dpEta*tr(sigma)/3 - dpC <= 0.
-// Components are Kelvin/Mandel [xx,yy,zz,sqrt(2)xy]. The return mapping,
-// smooth/apex classification, and tangent match constitutive_problem.m from
-// Cermak, Sysala, and Valdman (2019).
 
 for (int i=0; i<TlMaxItr; i++) {
 
+  // --- update_settlement ---- //
   tl = real(i+1)/TlMaxItr;
 
+  // --- initialize_increment ---- //
   startProcedure("increment initialization",t0)
   Du[] = 0.;
   du[] = 0.;
   niter = 0;
   endProcedure("increment initialization",t0)
 
+  // --- restore_converged_state ---- //
   startProcedure("converged state restoration",t0)
   [Sig11,Sig22,Sig12] = [SigOld11,SigOld22,SigOld12];
   Sig33 = SigOld33;
@@ -356,12 +357,14 @@ for (int i=0; i<TlMaxItr; i++) {
       = [lambda+2.*mu,lambda,0.,lambda+2.*mu,0.,2.*mu];
   endProcedure("converged state restoration",t0)
 
+  // --- assemble_linear_system ---- //
   startProcedure("linear-system assembly",t0)
   ALoc = elast(Vh,Vh,solver=CG,sym=1);
   A = ALoc;
   b = elast(0,Vh);
   endProcedure("linear-system assembly",t0)
 
+  // --- calculate_residual ---- //
   startProcedure("residual checking",t0)
   b = b .* DP;
   real resLoc = b.l2;
@@ -375,15 +378,18 @@ for (int i=0; i<TlMaxItr; i++) {
   while(nRes/(nRes0+1.e-30) > EpsNrCon && niter < NrMaxItr) {
     niter++;
 
+    // --- solve_linear_system ---- //
     startProcedure("linear-system solving",t0)
     set(A,sparams=" -ksp_type cg -ksp_rtol 1e-11 ");
     du[] = A^-1*b;
     endProcedure("linear-system solving",t0)
 
+    // --- update_increment ---- //
     startProcedure("increment update",t0)
     Du[] += du[];
     endProcedure("increment update",t0)
 
+    // --- compute_total_strain ---- //
     // Total plane-strain tensor at the current Newton iterate.
     startProcedure("total strain computation",t0)
     [Eps11,Eps22,Eps12] = epsilon(u);
@@ -393,6 +399,7 @@ for (int i=0; i<TlMaxItr; i++) {
                             Eps12+ElasticTrial12];
     Eps33 = 0.;
 
+    // --- compute_elastic_trial_state ----
     // Elastic trial strain, deviator, trial stress, rho=||s||, and mean stress.
     [ElasticTrial11,ElasticTrial22,ElasticTrial12] =
       [Eps11-EpOld11,Eps22-EpOld22,Eps12-EpOld12];
@@ -415,6 +422,7 @@ for (int i=0; i<TlMaxItr; i++) {
     SigTrial33 = 2.*mu*DevElastic33+pressureTrial;
     endProcedure("total strain computation",t0)
 
+    // --- classify_elastic_smooth_or_apex_return ---- //
     startProcedure("return branch classification",t0)
     real denominatorApex = bulk*dpEta^2;
     real denominatorSmooth = mu+denominatorApex;
@@ -428,6 +436,7 @@ for (int i=0; i<TlMaxItr; i++) {
     lambdaApex = apexSwitch*(dpEta*pressureTrial-dpC)/denominatorApex;
     endProcedure("return branch classification",t0)
 
+    // --- update_stress_and_plastic_strain ---- //
     startProcedure("Drucker-Prager return mapping",t0)
     [Normal11,Normal22,Normal12] =
       [smoothSwitch*DevElastic11/(normElastic+1.e-30),
@@ -460,6 +469,7 @@ for (int i=0; i<TlMaxItr; i++) {
            +apexSwitch*(Eps33-dpC/(3.*bulk*dpEta)-EpOld33);
     endProcedure("Drucker-Prager return mapping",t0)
 
+    // --- update_consistent_tangent ---- //
     startProcedure("consistent tangent update",t0)
     curvatureFactor = smoothSwitch*2.*SQ2*mu^2*lambdaSmooth/(rhoTrial+1.e-30);
     [Mt11,Mt12,Mt13,Mt22,Mt23,Mt33] = (1.-apexSwitch)*[
@@ -477,12 +487,14 @@ for (int i=0; i<TlMaxItr; i++) {
         -Correction12^2/denominatorSmooth];
     endProcedure("consistent tangent update",t0)
 
+    // --- assemble_linear_system ---- //
     startProcedure("linear-system assembly",t0)
     ALoc = elast(Vh,Vh,solver=CG,sym=1);
     A = ALoc;
     b = elast(0,Vh);
     endProcedure("linear-system assembly",t0)
 
+    // --- calculate_residual ---- //
     startProcedure("residual checking",t0)
     b = b .* DP;
     resLoc = b.l2;
@@ -521,9 +533,10 @@ for (int i=0; i<TlMaxItr; i++) {
   mpiAllReduce(reactionLocal,reactionGlobal,mpiCommWorld,mpiSUM);
   real normalizedPressure = -reactionGlobal/(footingWidth*cohesion);
 
+  // --- screen output ---- //
   if(mpirank==0)
-    cout.scientific << "DP_RESULT," << i+1 << "," << tl*maxSettlement << ","
-         << normalizedPressure << "," << niter << ","
+    cout.scientific << i+1 << "\t" << tl*maxSettlement << "\t"
+         << normalizedPressure << "\t" << niter << "\t"
          << nRes/(nRes0+1.e-30) << endl;
 )"""";
 
