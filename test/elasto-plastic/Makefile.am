@@ -9,7 +9,7 @@ else !HAVESALOME
 MESHDIR2=./../../data/meshes/2D/Geo-Files/Gmsh/
 MESHDIR3=./../../data/meshes/3D/Geo-Files/
 
-TESTS += test_elasto_plastic_native.sh
+TESTS += test_elasto_plastic_native.sh test_elasto_plastic_drucker_prager.sh
 
 if HAVEMGIS
 TESTS += test_elasto_plastic_mfront.sh
@@ -55,6 +55,22 @@ test_elasto_plastic_native.sh:
 	@echo './PSD_Solve -np $(NP) Main.edp -mesh $(MESHDIR2)/quater_cylinder.msh -v 0 -ns -nw > Solve-2D_elasto-plasticity_native.log' >> $@
 	@echo '! grep -q "Newton iterations maxed out" Solve-2D_elasto-plasticity_native.log' >> $@
 	@echo 'echo "Native von-Mises elasto-plasticity: SUCCESS"' >> $@
+	@chmod +x $@
+
+test_elasto_plastic_drucker_prager.sh:
+	@echo '#!/bin/bash' > $@
+	@echo 'set -e' >> $@
+	@echo 'echo ""' >> $@
+	@echo 'echo "*============================================================*"' >> $@
+	@echo 'echo " Parallel 2D native Drucker-Prager elasto-plasticity "' >> $@
+	@echo 'echo "*============================================================*"' >> $@
+	@echo './PSD_PreProcess -dimension 2 -problem elasto_plastic -dirichletconditions 4 -model drucker_prager -lagrange 2 -testflags > PreProcess-2D_drucker-prager_native.log' >> $@
+	@echo '! grep -q "load.*mfront" Main.edp' >> $@
+	@echo './PSD_Solve -np $(NP) Main.edp -mesh $(MESHDIR2)/strip_footing_geomechanics.msh -v 0 -ns -nw > Solve-2D_drucker-prager_native.log' >> $@
+	@echo '! grep -q "Newton iterations maxed out" Solve-2D_drucker-prager_native.log' >> $@
+	@echo 'test "$$(grep -c "^DP_RESULT,[0-9]" Solve-2D_drucker-prager_native.log)" -eq 12' >> $@
+	@echo 'grep -q "^DP_RESULT,12," Solve-2D_drucker-prager_native.log' >> $@
+	@echo 'echo "Native Drucker-Prager elasto-plasticity: SUCCESS"' >> $@
 	@chmod +x $@
 
 if HAVEMGIS
