@@ -7,14 +7,14 @@ PSD is a Massively Parallel FEM solver for continuum dynamics. Because this is a
 ## How Can I Contribute?
 
 ### Reporting Bugs
-* Check the [Issues tab](https://github.com/mohd-afeef-badri/psd/issues) to see if the bug has already been reported.
+* Check the [Issues tab](https://github.com/psd-projects/psd/issues) to see if the bug has already been reported.
 * If not, open a new issue. Clearly describe the problem, including:
     * Your OS and compiler and dependencies version (MPI, FreeFEM, PETSc, MFront, ...)
     * The MPI implementation used (e.g., OpenMPI, MPICH).
     * Steps to reproduce the issue (and a minimal mesh/input file if possible).
 
 ### Suggesting Enhancements
-* Open an [issue](https://github.com/mohd-afeef-badri/psd/issues) to discuss the proposed feature before starting work.
+* Open an [issue](https://github.com/psd-projects/psd/issues) to discuss the proposed feature before starting work.
 * Explain the physical or numerical rationale behind the enhancement.
 
 ### Pull Requests
@@ -27,12 +27,12 @@ PSD is a Massively Parallel FEM solver for continuum dynamics. Because this is a
 ## Getting Help
 Either of the three are acceptable:
 1. Via direct email: mohd-afeef.badri@cea.fr
-2. GitHub [issue](https://github.com/mohd-afeef-badri/psd/issues): For bug reports and feature requests
-3. Documentation: https://mohd-afeef-badri.github.io/psd/
+2. GitHub [issue](https://github.com/psd-projects/psd/issues): For bug reports and feature requests
+3. Documentation: https://psd-projects.github.io/psd/
 
 
 ## Recognition
-Contributors are recognized in: [CONTRIBUTORS.md](https://github.com/mohd-afeef-badri/psd/blob/main/CONTRIBUTORS.md) file
+Contributors are recognized in: [CONTRIBUTORS.md](https://github.com/psd-projects/psd/blob/main/CONTRIBUTORS.md) file
 GitHub's contributor list. And release notes for significant contributions
 
 ## License
