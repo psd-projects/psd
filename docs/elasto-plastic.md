@@ -439,3 +439,541 @@ Comparison is made to FEniCS Solid Mechanics results \[@Fenics]. Displacement an
 
 
 The results validate PSD's native Von-Mises plasticity implementation against the reference solution.
+
+---
+
+## Tutorial 3
+### Native Drucker–Prager strip-footing problem (without MFront)
+#### Associated perfect plasticity in two-dimensional plane strain
+
+> 💡 **Note**: This tutorial uses PSD's native Drucker–Prager implementation.
+> Do not add `-useMfront`: this model performs its return mapping and consistent
+> tangent update directly in PSD.
+
+> 💡 **Scope**: The current implementation is small-strain, plane-strain,
+> associated, perfectly plastic Drucker–Prager. It has no hardening, tension
+> cut-off, dilatancy angle distinct from the friction angle, or three-dimensional
+> implementation.
+
+### Introduction
+
+This tutorial studies a displacement-controlled strip footing. Symmetry about
+the footing centreline permits the right half of the physical problem to be
+represented by the square domain
+
+$$
+\Omega=[0,10]\times[0,10].
+$$
+
+The represented half-width of the footing is $B=1$. A downward settlement
+$\bar u$ is imposed on the top segment $0\le x\le B$, while the rest of the top
+surface is traction-free. The bottom is restrained vertically and both vertical
+sides are restrained horizontally. These lateral conditions reproduce the
+reference benchmark of Čermák, Sysala, and Valdman.
+
+<figure style="text-align: center;">
+  <img src="_images/elasto-plastic/drucker-prager-geometry.png" width="58%" alt="Triangular strip-footing mesh and boundary conditions">
+  <figcaption><em>Figure: Shared 200-triangle strip-footing mesh. Boundary numbers and conditions are listed below.</em></figcaption>
+</figure>
+
+The Gmsh physical labels are:
+
+| Label | Boundary | Condition |
+|:---:|---|---|
+| 1 | bottom | $u_y=0$ |
+| 2 | right side | $u_x=0$ |
+| 3 | footing | $u_y=-\bar u$ |
+| 4 | free top | zero traction |
+| 5 | left symmetry | $u_x=0$ |
+| 6 | surface | material domain |
+
+The mesh file used for this tutorial is `strip_footing_geomechanics.msh`.
+
+### Drucker–Prager theory
+
+#### Kinematics and elasticity
+
+Small strain is additively decomposed into elastic and plastic parts:
+
+$$
+\boldsymbol\varepsilon
+=\boldsymbol\varepsilon^e+\boldsymbol\varepsilon^p,
+\qquad
+\boldsymbol\sigma
+=2\mu\,\operatorname{dev}(\boldsymbol\varepsilon^e)
++K\operatorname{tr}(\boldsymbol\varepsilon^e)\boldsymbol I,
+$$
+
+where
+
+$$
+\mu=\frac{E}{2(1+\nu)},
+\qquad
+K=\frac{E}{3(1-2\nu)}.
+$$
+
+Plane strain means $\varepsilon_{zz}=0$, but $\sigma_{zz}$ and
+$\varepsilon^p_{zz}$ are generally non-zero and must be retained by the
+constitutive update. PSD stores symmetric tensors in Kelvin/Mandel ordering,
+
+$$
+[xx,yy,zz,\sqrt{2}xy],
+$$
+
+so a tensor inner product is an ordinary vector dot product.
+
+#### Yield surface and associated flow
+
+PSD uses a tension-positive convention and the yield function
+
+$$
+f(\boldsymbol\sigma)
+=\sqrt{J_2}+\eta p-c\le0,
+\qquad
+p=\frac{1}{3}\operatorname{tr}(\boldsymbol\sigma),
+\qquad
+\sqrt{J_2}=\frac{\|\operatorname{dev}\boldsymbol\sigma\|}{\sqrt2}.
+$$
+
+For the plane-strain parameter mapping used by the reference implementation,
+the friction angle $\phi$ and physical cohesion $c_0$ are converted to
+
+$$
+\eta=\frac{3\tan\phi}{\sqrt{9+12\tan^2\phi}},
+\qquad
+c=\frac{3c_0}{\sqrt{9+12\tan^2\phi}}.
+$$
+
+The flow is associated:
+
+$$
+\dot{\boldsymbol\varepsilon}^{p}
+=\dot\lambda\,\frac{\partial f}{\partial\boldsymbol\sigma},
+\qquad \dot\lambda\ge0.
+$$
+
+Consequently the friction parameter also controls plastic volumetric strain.
+Do not substitute another inscribed or circumscribed Drucker–Prager mapping
+without regenerating the reference curve.
+
+#### Elastic predictor and return classification
+
+At Newton iterate $k$, using the plastic strain from the last converged load
+step, PSD forms
+
+$$
+\boldsymbol\varepsilon^{e,\mathrm{tr}}
+=\boldsymbol\varepsilon(\boldsymbol u^k)-\boldsymbol\varepsilon^p_n,
+$$
+
+$$
+p^{\mathrm{tr}}=K\operatorname{tr}(\boldsymbol\varepsilon^{e,\mathrm{tr}}),
+\qquad
+\rho^{\mathrm{tr}}
+=2\mu\|\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})\|.
+$$
+
+Two scalar criteria distinguish all three branches:
+
+$$
+C_1=\frac{\rho^{\mathrm{tr}}}{\sqrt2}
+     +\eta p^{\mathrm{tr}}-c,
+$$
+
+$$
+C_2=\eta p^{\mathrm{tr}}
+     -K\eta^2\frac{\rho^{\mathrm{tr}}}{\mu\sqrt2}-c.
+$$
+
+The response is:
+
+| Conditions | Return branch |
+|---|---|
+| $C_1\le0$ | elastic |
+| $C_1>0$ and $C_2\le0$ | smooth part of the cone |
+| $C_1>0$ and $C_2>0$ | cone apex |
+
+For a smooth return,
+
+$$
+\Delta\lambda_s=\frac{C_1}{\mu+K\eta^2},
+\qquad
+\widehat{\boldsymbol N}
+=\frac{\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})}
+       {\|\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})\|},
+$$
+
+$$
+\widehat{\boldsymbol M}
+=\sqrt2\mu\widehat{\boldsymbol N}+K\eta\boldsymbol I,
+\qquad
+\boldsymbol\sigma_{n+1}
+=\boldsymbol\sigma^{\mathrm{tr}}
+-\Delta\lambda_s\widehat{\boldsymbol M},
+$$
+
+$$
+\boldsymbol\varepsilon^p_{n+1}
+=\boldsymbol\varepsilon^p_n
++\Delta\lambda_s
+\left(\frac{\widehat{\boldsymbol N}}{\sqrt2}
+      +\frac{\eta}{3}\boldsymbol I\right).
+$$
+
+At the apex, the deviatoric stress vanishes:
+
+$$
+\boldsymbol\sigma_{n+1}=\frac{c}{\eta}\boldsymbol I,
+\qquad
+\boldsymbol\varepsilon^p_{n+1}
+=\boldsymbol\varepsilon_{n+1}
+-\frac{c}{3K\eta}\boldsymbol I.
+$$
+
+#### Consistent tangent
+
+Let $\mathbb P_{\mathrm{dev}}$ be the deviatoric projector and
+
+$$
+\mathbb C^e=2\mu\mathbb P_{\mathrm{dev}}
+            +K\boldsymbol I\otimes\boldsymbol I.
+$$
+
+On the smooth cone, PSD uses the exact consistent tangent
+
+$$
+\mathbb C^{\mathrm{alg}}
+=\mathbb C^e
+-\frac{2\sqrt2\mu^2\Delta\lambda_s}{\rho^{\mathrm{tr}}}
+ \left(\mathbb P_{\mathrm{dev}}
+       -\widehat{\boldsymbol N}\otimes\widehat{\boldsymbol N}\right)
+-\frac{\widehat{\boldsymbol M}\otimes\widehat{\boldsymbol M}}
+       {\mu+K\eta^2}.
+$$
+
+The tangent is elastic on elastic points and zero at apex points. The measured relative error is $2.556\times10^{-11}$.
+
+### Finite-element and Newton discretization
+
+The benchmark uses continuous P2 displacement on 200 triangular cells and the
+seven-point `FEQF5` triangle rule for stress, plastic strain, branch indicators,
+and tangent components. Although the Gmsh geometry itself uses three-node
+triangles, `-lagrange 2` makes the displacement approximation quadratic by
+adding mid-edge degrees of freedom.
+
+The equilibrium residual is
+
+$$
+R(\boldsymbol u;\boldsymbol v)
+=\int_\Omega
+ \boldsymbol\sigma(\boldsymbol\varepsilon(\boldsymbol u)):
+ \boldsymbol\varepsilon(\boldsymbol v)\,\mathrm d\Omega,
+$$
+
+and each semismooth Newton correction solves
+
+$$
+\int_\Omega
+ \boldsymbol\varepsilon(\delta\boldsymbol u):
+ \mathbb C^{\mathrm{alg}}:
+ \boldsymbol\varepsilon(\boldsymbol v)\,\mathrm d\Omega
+=-R(\boldsymbol u;\boldsymbol v).
+$$
+
+The native solver is organized as follows:
+
+<pre><code>//==============================================================================
+//  ------- Native Drucker-Prager algorithm -------
+//------------------------------------------------------------------------------
+//  Loop 1 : TlMaxItr;             # prescribed-settlement loop
+//    update_settlement();
+//    initialize_increment();      # Du = 0
+//    restore_converged_state();   # stress and plastic strain
+//    initialize_elastic_tangent();
+//    assemble_linear_system();
+//    Loop 2 : NrMaxItr;           # semismooth Newton loop
+//      solve_linear_system();
+//      update_increment();        # Du += du
+//      compute_total_strain();
+//      compute_elastic_trial_state();
+//      classify_elastic_smooth_or_apex_return();
+//      update_stress_and_plastic_strain();
+//      update_consistent_tangent();
+//      assemble_linear_system();
+//      exit_if_converged();
+//    commit_displacement_and_plastic_strain();
+//    calculate_footing_reaction();
+//==============================================================================
+</code></pre>
+
+### Procedure to simulate in PSD
+
+### Step 1: Preprocessing
+
+From a clean working directory, generate the native PSD problem with:
+
+<pre><code>
+PSD_PreProcess -problem elasto_plastic -model drucker_prager -dimension 2 \
+  -dirichletconditions 4 -lagrange 2 -postprocess u
+</code></pre>
+
+The options mean:
+
+* `-problem elasto_plastic`: select incremental elasto-plastic equilibrium;
+* `-model drucker_prager`: select the native Drucker–Prager update;
+* `-dimension 2`: select plane strain;
+* `-dirichletconditions 4`: generate the four constrained boundary groups;
+* `-lagrange 2`: use P2 displacement;
+* `-postprocess u`: write the displacement time series for ParaView.
+
+There is no `-tractionconditions` argument because the footing is loaded by a
+prescribed displacement. There is also no `-useMfront` argument.
+
+The generated `ControlParameters.edp` contains:
+
+<pre><code>// Physical inputs
+real E             = 1.e7,
+     nu            = 0.48,
+     cohesion      = 450.,
+     frictionAngle = 20.*pi/180.;
+
+// Elastic constants and the benchmark's Drucker-Prager mapping
+real lambda = E*nu/((1.+nu)*(1.-2.*nu)),
+     mu     = E/(2.*(1.+nu)),
+     bulk   = E/(3.*(1.-2.*nu)),
+     dpEta  = 3.*tan(frictionAngle)
+              /sqrt(9.+12.*tan(frictionAngle)^2),
+     dpC    = 3.*cohesion/sqrt(9.+12.*tan(frictionAngle)^2);
+
+real footingWidth = 1.,
+     maxSettlement = 0.03;
+
+// Twelve equal settlement increments and seven-point triangle quadrature
+macro EpsNrCon  () 1.e-8
+macro NrMaxItr  () 200
+macro TlMaxItr  () 12
+macro QFElastoPlastic FEQF5
+</code></pre>
+
+The four Dirichlet groups are also generated automatically:
+
+<pre><code>// Label 1: bottom vertical restraint
+macro Dbc0On 1
+macro Dbc0Uy 0.
+
+// Label 2: right horizontal restraint
+macro Dbc1On 2
+macro Dbc1Ux 0.
+
+// Label 5: left symmetry
+macro Dbc2On 5
+macro Dbc2Ux 0.
+
+// Label 3: displacement-controlled footing
+macro Dbc3On 3
+macro Dbc3Uy -tl*maxSettlement
+</code></pre>
+
+The model-specific finite-element spaces in `MeshAndFeSpace.edp` are:
+
+<pre><code>// Pk is [P2,P2] because preprocessing used -lagrange 2
+fespace Vh(Th, Pk);
+
+// Constitutive variables live at the seven FEQF5 integration points
+fespace Qh(Th, [QFElastoPlastic, QFElastoPlastic, QFElastoPlastic,
+                QFElastoPlastic, QFElastoPlastic, QFElastoPlastic]);
+fespace Ph(Th, QFElastoPlastic);
+fespace Sh(Th, [QFElastoPlastic, QFElastoPlastic, QFElastoPlastic]);
+</code></pre>
+
+The generated return classification closely follows the equations above:
+
+<pre><code>real denominatorApex   = bulk*dpEta^2;
+real denominatorSmooth = mu + denominatorApex;
+
+criterion1 = rhoTrial/SQ2 + dpEta*pressureTrial - dpC;
+criterion2 = dpEta*pressureTrial
+             - denominatorApex*rhoTrial/(mu*SQ2) - dpC;
+
+plasticSwitch = (criterion1 > 0. ? 1. : 0.);
+apexSwitch    = plasticSwitch*(criterion2 > 0. ? 1. : 0.);
+smoothSwitch  = plasticSwitch - apexSwitch;
+
+lambdaSmooth = smoothSwitch*criterion1/denominatorSmooth;
+lambdaApex   = apexSwitch*(dpEta*pressureTrial-dpC)/denominatorApex;
+</code></pre>
+
+The stress correction and plastic-history candidate are evaluated pointwise in
+the same quadrature spaces. `SQ2` is $\sqrt2$, and the `12` component is the
+Mandel shear component $\sqrt2\sigma_{xy}$:
+
+<pre><code>// Unit trial-deviator direction, active only on the smooth branch
+[Normal11,Normal22,Normal12] =
+  [smoothSwitch*DevElastic11/(normElastic+1.e-30),
+   smoothSwitch*DevElastic22/(normElastic+1.e-30),
+   smoothSwitch*DevElastic12/(normElastic+1.e-30)];
+Normal33 = smoothSwitch*DevElastic33/(normElastic+1.e-30);
+
+// Gradient direction used by the smooth stress correction
+[Correction11,Correction22,Correction12] =
+  [SQ2*mu*Normal11 + smoothSwitch*bulk*dpEta,
+   SQ2*mu*Normal22 + smoothSwitch*bulk*dpEta,
+   SQ2*mu*Normal12];
+Correction33 = SQ2*mu*Normal33 + smoothSwitch*bulk*dpEta;
+
+// Elastic/smooth response plus the hydrostatic apex replacement
+[Sig11,Sig22,Sig12] =
+  [(1.-apexSwitch)*SigTrial11-lambdaSmooth*Correction11
+     +apexSwitch*dpC/dpEta,
+   (1.-apexSwitch)*SigTrial22-lambdaSmooth*Correction22
+     +apexSwitch*dpC/dpEta,
+   (1.-apexSwitch)*SigTrial12-lambdaSmooth*Correction12];
+Sig33 = (1.-apexSwitch)*SigTrial33-lambdaSmooth*Correction33
+        +apexSwitch*dpC/dpEta;
+
+// Candidate plastic strain; it is committed only after Newton convergence
+[Ep11,Ep22,Ep12] =
+  [EpOld11+lambdaSmooth*(Normal11/SQ2+dpEta/3.)
+     +apexSwitch*(Eps11-dpC/(3.*bulk*dpEta)-EpOld11),
+   EpOld22+lambdaSmooth*(Normal22/SQ2+dpEta/3.)
+     +apexSwitch*(Eps22-dpC/(3.*bulk*dpEta)-EpOld22),
+   EpOld12+lambdaSmooth*Normal12/SQ2
+     +apexSwitch*(Eps12-EpOld12)];
+Ep33 = EpOld33+lambdaSmooth*(Normal33/SQ2+dpEta/3.)
+       +apexSwitch*(Eps33-dpC/(3.*bulk*dpEta)-EpOld33);
+</code></pre>
+
+The six stored tangent entries form the symmetric in-plane Mandel matrix
+
+$$
+\begin{bmatrix}
+M_{11}&M_{12}&M_{13}\\
+M_{12}&M_{22}&M_{23}\\
+M_{13}&M_{23}&M_{33}
+\end{bmatrix}.
+$$
+
+For example, the generated update includes:
+
+<pre><code>curvatureFactor = smoothSwitch*2.*SQ2*mu^2*lambdaSmooth
+                  /(rhoTrial+1.e-30);
+
+[Mt11,Mt12,Mt13,Mt22,Mt23,Mt33] = (1.-apexSwitch)*[
+  lambda+2.*mu-curvatureFactor*(2./3.-Normal11^2)
+    -Correction11^2/denominatorSmooth,
+  lambda-curvatureFactor*(-1./3.-Normal11*Normal22)
+    -Correction11*Correction22/denominatorSmooth,
+  -curvatureFactor*(0.-Normal11*Normal12)
+    -Correction11*Correction12/denominatorSmooth,
+  lambda+2.*mu-curvatureFactor*(2./3.-Normal22^2)
+    -Correction22^2/denominatorSmooth,
+  -curvatureFactor*(0.-Normal22*Normal12)
+    -Correction22*Correction12/denominatorSmooth,
+  2.*mu-curvatureFactor*(1.-Normal12^2)
+    -Correction12^2/denominatorSmooth];
+</code></pre>
+
+Finally, `VariationalFormulations.edp` uses that tangent and the updated stress
+with the same seven-point integration rule:
+
+<pre><code>intN(Th,qforder=5)(epsilonXMt(du,Mt)'*epsilon(v))
+- intN(Th,qforder=5)([Sig11,Sig22,Sig12]'*epsilon(v))
++ on(Dbc0On,DirichletBc0)
++ on(Dbc1On,DirichletBc1)
++ on(Dbc2On,DirichletBc2)
++ on(Dbc3On,DirichletBc3);
+</code></pre>
+
+Only after global Newton convergence are displacement and plastic strain
+committed. This is important: committing quadrature history inside a Newton
+iteration would make the result iteration-path dependent.
+
+### Step 2: Solving
+
+From the generated problem directory, run:
+
+<pre><code>
+PSD_Solve -np 1 Main.edp -mesh strip_footing_tri.msh -v 0 -ns -nw
+</code></pre>
+
+`-np 1` still uses PSD's parallel execution path. The benchmark has also been
+checked with `-np 2`; both rank counts agree to round-off.
+
+Each converged increment prints a machine-readable record:
+
+<pre><code>
+DP_RESULT,step,settlement,normalized_pressure,newton_iterations,relative_residual
+DP_RESULT,1,2.500000000000000e-03,1.791689062612385e+01,8,1.106599574054040e-09
+...
+DP_RESULT,12,3.000000000000000e-02,1.971712453439382e+01,12,2.565316703080467e-14
+</code></pre>
+
+The reported pressure is the vertical footing reaction divided by
+$B c_0$. PSD evaluates the reaction by internal virtual work using a virtual
+vertical displacement equal to one on the footing degrees of freedom.
+
+### Step 3: PSD postprocessing in ParaView
+
+With `-postprocess u`, PSD writes 12 frames to a timestamped `VTUs_*` directory:
+
+<pre><code>
+VTUs_.../Solution.pvd
+VTUs_.../Solution_0000.vtu
+...
+VTUs_.../Solution_0011.vtu
+</code></pre>
+
+Open `Solution.pvd` in ParaView, choose **U** as the vector field, and apply
+**Warp By Vector**. The figure below uses the actual PSD `Solution_*.vtu` data;
+the warp factor is 30 so the deformation is visible on the $10\times10$ domain.
+
+<figure style="text-align: center;">
+  <img src="_images/elasto-plastic/drucker-prager-displacement-steps.png" width="98%" alt="PSD displacement magnitude at three settlement increments">
+  <figcaption><em>Figure: Native PSD displacement magnitude at steps 1, 6, and 12. Deformation is amplified 30 times.</em></figcaption>
+</figure>
+
+You have now completed a native, parallel, displacement-controlled
+Drucker-Prager analysis.
+
+### Validation results
+
+The pressure–settlement curves from PSD and DOLFINx are visually coincident:
+
+<figure style="text-align: center;">
+  <img src="_images/elasto-plastic/drucker-prager-validation-curve.png" width="72%" alt="PSD and DOLFINx Drucker-Prager pressure-settlement comparison">
+  <figcaption><em>Figure: Normalized footing pressure from native PSD and the independent DOLFINx implementation.</em></figcaption>
+</figure>
+
+Selected values are:
+
+| Step | Settlement | DOLFINx $q/c_0$ | PSD $q/c_0$ |
+|:---:|---:|---:|---:|
+| 1 | 0.0025 | 17.9168906261 | 17.9168906261 |
+| 6 | 0.0150 | 19.5855250786 | 19.5855250767 |
+| 12 | 0.0300 | 19.7171245361 | 19.7171245344 |
+
+Across all 12 increments, the maximum relative pressure difference is
+
+$$
+\max_n
+\frac{|q_n^{\mathrm{PSD}}-q_n^{\mathrm{DOLFINx}}|}
+     {|q_n^{\mathrm{DOLFINx}}|}
+=4.924\times10^{-9}.
+$$
+
+
+### References
+
+The constitutive return and strip-footing parameters follow:
+
+* M. Čermák, S. Sysala, and J. Valdman, [*Efficient and flexible MATLAB
+  implementation of 2D and 3D elastoplastic
+  problems*](https://arxiv.org/abs/1805.04155), Applied Mathematics and
+  Computation 355 (2019), 595–614;
+* the accompanying [`plasticity_DP_2D/constitutive_problem.m`
+  implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
+* the [COMET-FEniCSx quadrature-state
+  pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html)
+  for nonlinear plasticity assembly.
+
+
