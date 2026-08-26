@@ -5,7 +5,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 
 ### Added
 
-- Spack based CI on GitHub, see spack recipie https://github.com/psd-projects/k_psd.git
+- Spack based CI on GitHub, see spack recipie https://github.com/psd-projects/spack_psd.git
 - Med 4.1.1 and HDF5 1.10.11 is now compiled with `--download-dependencies=yes`
 
 ### Changed
