@@ -12,7 +12,7 @@ MESHDIR3=./../../data/meshes/3D/Geo-Files/
 TESTS += test_elasto_plastic_native.sh test_elasto_plastic_drucker_prager.sh
 
 if HAVEMGIS
-TESTS += test_elasto_plastic_mfront.sh
+TESTS += test_elasto_plastic_mfront.sh test_elasto_plastic_drucker_prager_mfront.sh
 endif
 endif
 
@@ -68,8 +68,7 @@ test_elasto_plastic_drucker_prager.sh:
 	@echo '! grep -q "load.*mfront" Main.edp' >> $@
 	@echo './PSD_Solve -np $(NP) Main.edp -mesh $(MESHDIR2)/strip_footing_geomechanics.msh -v 0 -ns -nw > Solve-2D_drucker-prager_native.log' >> $@
 	@echo '! grep -q "Newton iterations maxed out" Solve-2D_drucker-prager_native.log' >> $@
-	@echo 'test "$$(grep -c "^DP_RESULT,[0-9]" Solve-2D_drucker-prager_native.log)" -eq 12' >> $@
-	@echo 'grep -q "^DP_RESULT,12," Solve-2D_drucker-prager_native.log' >> $@
+	@echo 'test "$$(awk '\''$$1 ~ /^[0-9]+$$/ && NF == 5 {n++} END {print n+0}'\'' Solve-2D_drucker-prager_native.log)" -eq 12' >> $@
 	@echo 'echo "Native Drucker-Prager elasto-plasticity: SUCCESS"' >> $@
 	@chmod +x $@
 
@@ -92,6 +91,23 @@ test_elasto_plastic_mfront.sh:
 	@echo 'echo " Checking Elasto Plasticity : SUCCESS                      "' >> $@
 	@echo 'echo "*============================================================*"' >> $@
 	@echo 'echo ""' >> $@
+	@chmod +x $@
+
+test_elasto_plastic_drucker_prager_mfront.sh:
+	@echo '#!/bin/bash' > $@
+	@echo 'set -e' >> $@
+	@echo 'echo ""' >> $@
+	@echo 'echo "*============================================================*"' >> $@
+	@echo 'echo " Parallel 2D Drucker-Prager elasto-plasticity with MFront "' >> $@
+	@echo 'echo "*============================================================*"' >> $@
+	@echo './PSD_PreProcess -dimension 2 -problem elasto_plastic -dirichletconditions 4 -model drucker_prager -lagrange 2 -useMfront -testflags > PreProcess-2D_drucker-prager_mfront.log' >> $@
+	@echo 'grep -q "load.*mfront" Main.edp' >> $@
+	@echo 'grep -q "MaterialBehaviour.*DruckerPrager" ControlParameters.edp' >> $@
+	@echo 'grep -q "mfrontQuadraturePointsPerCell.*=.*7" LinearFormBuilderAndSolver.edp' >> $@
+	@echo './PSD_Solve -np $(NP) Main.edp -mesh $(MESHDIR2)/strip_footing_geomechanics.msh -v 0 -ns -nw > Solve-2D_drucker-prager_mfront.log' >> $@
+	@echo '! grep -q "Newton iterations maxed out" Solve-2D_drucker-prager_mfront.log' >> $@
+	@echo 'test "$$(awk '\''$$1 ~ /^[0-9]+$$/ && NF == 5 {n++} END {print n+0}'\'' Solve-2D_drucker-prager_mfront.log)" -eq 12' >> $@
+	@echo 'echo "MFront Drucker-Prager elasto-plasticity: SUCCESS"' >> $@
 	@chmod +x $@
 endif
 endif

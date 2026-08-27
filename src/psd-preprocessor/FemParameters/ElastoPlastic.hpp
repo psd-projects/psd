@@ -29,7 +29,7 @@
 
 writeHeader;
 
-if(!useMfront && spc==2)
+if((!useMfront || Model=="drucker_prager") && spc==2)
 codeSnippet R""""(
 
  //============================================================================
@@ -46,7 +46,7 @@ codeSnippet R""""(
        def(Du)   ;
 )"""";
 
-if(useMfront)
+if(useMfront && Model!="drucker_prager")
 codeSnippet R""""(
 
  //============================================================================
@@ -85,7 +85,7 @@ codeSnippet R""""(
   "                         Mt22 , Mt23 ,                                        \n"
   "                                Mt33 ];                                       \n";
 
-  if(useMfront) writeIt
+  if(useMfront && Model!="drucker_prager") writeIt
   "                                                                              \n"
   "  startProcedure(\"Material tensor building via MFront\",t0)                  \n"
   "                                                                              \n"
@@ -98,6 +98,18 @@ codeSnippet R""""(
   "                                                                              \n"
   "  endProcedure(\"Material tensor building via MFront\",t0)                    \n"
   "                                                                              \n"
+  "                                                                              \n";
+  if(useMfront && Model=="drucker_prager") writeIt
+  "                                                                              \n"
+  "  startProcedure(\"Material tensor building via MFront\",t0)                  \n"
+  "  PsdMfrontHandler( MaterialBehaviour                                      ,  \n"
+  "                       mfrontBehaviourHypothesis      = MaterialHypothesis ,  \n"
+  "                       mfrontPropertyNames            = PropertyNames      ,  \n"
+  "                       mfrontPropertyValues           = PropertyValues     ,  \n"
+  "                       mfrontMaterialTensor           = Mt11[]             ,  \n"
+  "                       mfrontQuadraturePointsPerCell  = 7                     \n"
+  "                   );                                                         \n"
+  "  endProcedure(\"Material tensor building via MFront\",t0)                    \n"
   "                                                                              \n";
   if(!useMfront) writeIt
   "                                                                              \n"
@@ -113,7 +125,7 @@ codeSnippet R""""(
   "                                                                              \n"
   "                                                                              \n";
 
-  if(useMfront)
+  if(useMfront && Model!="drucker_prager")
   writeIt
    "                                                                              \n"
    "//============================================================================\n"
@@ -141,6 +153,27 @@ codeSnippet R""""(
    "//============================================================================\n"
    "                                                                              \n"
    "   Ih [Isv1,Isv2,Isv3,Isv4,Isv5];                                             \n"
+   "                                                                              \n";
+
+  if(useMfront && Model=="drucker_prager")
+  writeIt
+   "                                                                              \n"
+   "//============================================================================\n"
+   "// ------- MFront plane-strain Drucker-Prager quadrature state -------        \n"
+   "// Plastic strain uses [xx,yy,zz,sqrt(2)xy] at all seven FEQF5 points.         \n"
+   "//============================================================================\n"
+   "                                                                              \n"
+   "   Sh [Eps11,Eps22,Eps12];                                                    \n"
+   "   Sh [Sig11,Sig22,Sig12];                                                    \n"
+   "   Ih [Isv1,Isv2,Isv3,Isv4];                                                 \n"
+   "   Ih [IsvOld1,IsvOld2,IsvOld3,IsvOld4];                                     \n"
+   "   [Sig11,Sig22,Sig12] = [0.,0.,0.];                                         \n"
+   "   [Isv1,Isv2,Isv3,Isv4] = [0.,0.,0.,0.];                                    \n"
+   "   [IsvOld1,IsvOld2,IsvOld3,IsvOld4] = [0.,0.,0.,0.];                         \n"
+   "                                                                              \n"
+   "   Vh def(reactionTest);                                                      \n"
+   "   [reactionTest,reactionTest1] =                                             \n"
+   "     [0.,(abs(y-10.)<1.e-8 && x<=footingWidth+1.e-8)];                       \n"
    "                                                                              \n";
 
 

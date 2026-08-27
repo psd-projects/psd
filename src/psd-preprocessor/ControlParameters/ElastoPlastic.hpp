@@ -94,7 +94,7 @@ writeHeader;
   "       maxSettlement = 0.03;                                                  \n"
   "                                                                              \n";
 
-  if(useMfront){
+  if(useMfront && Model=="von_mises"){
   writeIt
   "  string    MaterialBehaviour   = \"IsotropicLinearHardeningPlasticity\";     \n";
 
@@ -110,6 +110,14 @@ writeHeader;
   "                                                                              \n"
   "                                                                              \n";
   }
+
+  if(useMfront && Model=="drucker_prager")
+  writeIt
+  "  string    MaterialBehaviour   = \"DruckerPrager\";                          \n"
+  "  string    MaterialHypothesis  = \"PLANESTRAIN\";                            \n"
+  "  string    PropertyNames       = \"YoungModulus PoissonRatio Cohesion FrictionAngle\";\n"
+  "  real[int] PropertyValues      = [ E, nu, cohesion, frictionAngle ];          \n"
+  "                                                                              \n";
 
   writeIt
   "//============================================================================\n"

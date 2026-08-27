@@ -137,12 +137,11 @@ if(!Sequential){
  "// ---------------------------------------------------------------------------- \n"
  "//  Ih       : Quadratur finite element space  for internal state variables     \n"
  "//             model-specific integration points. A vectorial space is built    \n"
- "//             with 5 components. To elaborate                                  \n"
- "//             First 4 are elastic stains [Exx, Eyy, Ezz, Exy] + 1 plasticity   \n"
+ "//             with the components required by the selected MFront behaviour.   \n"
  "//==============================================================================\n"
  "                                                                                \n"
  " fespace Ih  ( Th ,[ QFElastoPlastic, QFElastoPlastic, QFElastoPlastic,          \n"
- "                       QFElastoPlastic, QFElastoPlastic ]);                      \n"
+ "                       QFElastoPlastic"<<(useMfront && Model=="drucker_prager" ? "" : ", QFElastoPlastic")<<" ]);                      \n"
  "                                                                                \n";
 
  if(!fastmethod && spc==3)
