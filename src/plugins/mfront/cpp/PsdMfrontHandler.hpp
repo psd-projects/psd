@@ -27,7 +27,7 @@ class PsdMfrontHandler_Op : public E_F0mps {
   public:
     Expression behaviourName                          ;
 
-    static const int n_name_param = 11                 ;
+    static const int n_name_param = 12                 ;
     static basicAC_F0::name_and_type name_param[]     ;
     Expression nargs[n_name_param]                    ;
 
@@ -57,7 +57,8 @@ basicAC_F0::name_and_type PsdMfrontHandler_Op<K>::name_param[] =
   {"mfrontStressTensor"                , &typeid(KN<K>*)      },
   {"mfrontStateVariable"               , &typeid(KN<K>*)      },
   {"mfrontPreviousStrainTensor"        , &typeid(KN<K>*)      },
-  {"mfrontExternalStateVariableVector" , &typeid(KN<K>*)      }  
+  {"mfrontExternalStateVariableVector" , &typeid(KN<K>*)      },
+  {"mfrontQuadraturePointsPerCell"     , &typeid(long)        }
 };
 
 template<class K>
@@ -92,6 +93,7 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
   KN<K>* mfrontStateVariable                = nargs[8] ? GetAny<KN<K>*>((*nargs[8])(stack))       : NULL;
   KN<K>* mfrontPreviousStrainTensor         = nargs[9] ? GetAny<KN<K>*>((*nargs[9])(stack))       : NULL;
   KN<K>* mfrontExternalStateVariableVector  = nargs[10] ? GetAny<KN<K>*>((*nargs[10])(stack))     : NULL;
+  const int mfrontQuadraturePointsPerCell   = nargs[11] ? GetAny<long>((*nargs[11])(stack))        : 3;
 
   if(mfrontBehaviourName!=NULL && verbosity)
     cout << " \n"
@@ -169,28 +171,10 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
   auto v = make_view(d);
 
 
-    //----------------------------------------------
-    // Get information about total internal state variables
-    //----------------------------------------------
-  int componentsIsvs = 0;
-  if(b.isvs.size() > 0){
-
-       if (*mfrontBehaviourHypothesis=="GENERALISEDPLANESTRAIN" || *mfrontBehaviourHypothesis=="PLANESTRAIN"){
-          for (int i=0; i < b.isvs.size(); i++){
-             if(b.isvs[i].type == 0) componentsIsvs += 1;
-             if(b.isvs[i].type == 1) componentsIsvs += 1;
-             if(b.isvs[i].type == 2) componentsIsvs += 4;
-          }
-       }
-
-       if (*mfrontBehaviourHypothesis=="TRIDIMENSIONAL"){
-          for (int i=0; i < b.isvs.size(); i++){
-             if(b.isvs[i].type == 0) componentsIsvs += 1;
-             if(b.isvs[i].type == 1) componentsIsvs += 1;
-             if(b.isvs[i].type == 2) componentsIsvs += 6;
-          }
-       }
-  }
+  //----------------------------------------------
+  // Get information about total internal state variables
+  //----------------------------------------------
+  const int componentsIsvs = static_cast<int>(getArraySize(b.isvs,h));
   //------------------------------------------------
   // Assigning Properties for MGIS
   //-----------------------------------------------
@@ -342,6 +326,135 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
 
     if(*mfrontBehaviourHypothesis=="GENERALISEDPLANESTRAIN" || *mfrontBehaviourHypothesis=="PLANESTRAIN")
     {
+      
+      //The old 2D interface stored one material point per cell and broadcasts it to 
+      //the three FEQF2 points (3  quadrature  point s per cell). Higher-order  will 
+      //update at every quadrature point this is new.  Keep the  old  code unchanged 
+      //for compatibility and use the path when the  fuction is supplied an explicit
+      //quadrature point count (for example seven for FEQF5).
+
+      if(mfrontQuadraturePointsPerCell != 3)
+      {
+        const int nqp = mfrontQuadraturePointsPerCell;
+        if(nqp <= 0)
+        {
+          cout << "PsdMfrontHandler: mfrontQuadraturePointsPerCell must be positive" << endl;
+          exit(1);
+        }
+
+        if(mfrontMaterialTensor != NULL && mfrontStrainTensor == NULL &&
+           mfrontStressTensor == NULL && mfrontStateVariable == NULL)
+        {
+          if(mfrontMaterialTensor->n % (6*nqp) != 0)
+          {
+            cout << "PsdMfrontHandler: invalid 2D material tensor size for "
+                 << nqp << " quadrature points per cell" << endl;
+            exit(1);
+          }
+          const int totalCells = mfrontMaterialTensor->n/(6*nqp);
+          const int tangentIndices[6] = {0,1,3,5,7,15};
+          for(int i=0; i<totalCells; ++i)
+          {
+            for(int q=0; q<nqp; ++q)
+            {
+              for(int k=0; k<4; ++k)
+              {
+                d.s0.gradients[k] = 0.;
+                d.s1.gradients[k] = 0.;
+                d.s0.thermodynamic_forces[k] = 0.;
+              }
+              for(int k=0; k<componentsIsvs; ++k)
+              {
+                d.s0.internal_state_variables[k] = 0.;
+              }
+              d.K[0] = 1.;
+              integrate(v,b);
+              const int cellOffset = i*6*nqp;
+              for(int c=0; c<6; ++c)
+              {
+                mfrontMaterialTensor->operator[](cellOffset+c*nqp+q) =
+                  d.K[tangentIndices[c]];
+              }
+            }
+          }
+        }
+        else if(mfrontMaterialTensor != NULL && mfrontStrainTensor != NULL &&
+                mfrontStressTensor != NULL && mfrontStateVariable != NULL &&
+                mfrontPreviousStrainTensor == NULL &&
+                mfrontExternalStateVariableVector == NULL)
+        {
+          if(mfrontMaterialTensor->n % (6*nqp) != 0)
+          {
+            cout << "PsdMfrontHandler: invalid 2D material tensor size for "
+                 << nqp << " quadrature points per cell" << endl;
+            exit(1);
+          }
+          const int totalCells = mfrontMaterialTensor->n/(6*nqp);
+          const int strainSize = totalCells*3*nqp;
+          const int stateSize = totalCells*componentsIsvs*nqp;
+          if(mfrontStrainTensor->n != strainSize ||
+             mfrontStressTensor->n != strainSize ||
+             mfrontStateVariable->n != stateSize)
+          {
+            cout << "PsdMfrontHandler: inconsistent 2D quadrature field sizes; "
+                 << "expected strain/stress=" << strainSize
+                 << " and state=" << stateSize << endl;
+            exit(1);
+          }
+
+          const int tangentIndices[6] = {0,1,3,5,7,15};
+          for(int i=0; i<totalCells; ++i)
+          {
+            const int strainOffset = i*3*nqp;
+            const int tangentOffset = i*6*nqp;
+            const int stateOffset = i*componentsIsvs*nqp;
+            for(int q=0; q<nqp; ++q)
+            {
+              d.s0.gradients[0] = 0.;
+              d.s0.gradients[1] = 0.;
+              d.s0.gradients[2] = 0.;
+              d.s0.gradients[3] = 0.;
+              d.s1.gradients[0] = mfrontStrainTensor->operator[](strainOffset+q);
+              d.s1.gradients[1] = mfrontStrainTensor->operator[](strainOffset+nqp+q);
+              d.s1.gradients[2] = 0.;
+              d.s1.gradients[3] = mfrontStrainTensor->operator[](strainOffset+2*nqp+q);
+              for(int k=0; k<componentsIsvs; ++k)
+              {
+                d.s0.internal_state_variables[k] =
+                  mfrontStateVariable->operator[](stateOffset+k*nqp+q);
+              }
+
+              d.K[0] = 1.;
+              integrate(v,b);
+
+              mfrontStressTensor->operator[](strainOffset+q) =
+                d.s1.thermodynamic_forces[0];
+              mfrontStressTensor->operator[](strainOffset+nqp+q) =
+                d.s1.thermodynamic_forces[1];
+              mfrontStressTensor->operator[](strainOffset+2*nqp+q) =
+                d.s1.thermodynamic_forces[3];
+              for(int c=0; c<6; ++c)
+              {
+                mfrontMaterialTensor->operator[](tangentOffset+c*nqp+q) =
+                  d.K[tangentIndices[c]];
+              }
+              for(int k=0; k<componentsIsvs; ++k)
+              {
+                mfrontStateVariable->operator[](stateOffset+k*nqp+q) =
+                  d.s1.internal_state_variables[k];
+              }
+            }
+          }
+        }
+        else
+        {
+          cout << "PsdMfrontHandler: unsupported argument combination for a "
+               << "higher-order 2D quadrature rule" << endl;
+          exit(1);
+        }
+      }
+      else
+      {
         if ( mfrontMaterialTensor != NULL && mfrontStrainTensor == NULL )
         {
           if(verbosity)
@@ -496,7 +609,6 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
             }
             
             //Set external state variable field
-            //////
             istringstream iss( *mfrontExternalStateVariableNames);
             string s;
             int ii =0;
@@ -504,9 +616,7 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
             {
              setExternalStateVariable(d.s0,s.c_str(),mfrontExternalStateVariableValues->operator[](i*indexExtVar+(3*ii)));
              ii++;
-            }
-            //////
-            
+            }            
             if(ii != b.esvs.size())
             {
           	cout <<
@@ -545,6 +655,7 @@ AnyType PsdMfrontHandler_Op<K>::operator()(Stack stack) const {
             }
           }
         }
+      }
 
     }
 
