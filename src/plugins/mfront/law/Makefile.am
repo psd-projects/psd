@@ -4,6 +4,7 @@ LIST_COMPILE = HelloWorld.mfront  \
 HujeuxECP1985.mfront \
 ##Hujeux.mfront \
 Elasticity.mfront  \
+DruckerPrager.mfront \
 IsotropicLinearHardeningPlasticity.mfront  \
 Iwan.mfront \
 desmorat20152d.mfront \
@@ -16,6 +17,7 @@ if HAVEMFRONT
 LIST_OBJ_FILES = src/HelloWorld.o  \
 src/HujeuxECP1985.o \
 src/Elasticity.o  \
+src/DruckerPrager.o \
 ##src/Hujeux.o \
 src/IsotropicLinearHardeningPlasticity.o  \
 src/Iwan.o \
@@ -54,6 +56,15 @@ src/Elasticity.o: Elasticity.mfront
 	@echo "----------------------------------------"
 	@echo ""
 	$(MFRONT) --interface=generic  Elasticity.mfront
+	$(MFRONT) --obuild
+
+src/DruckerPrager.o: DruckerPrager.mfront
+	@echo ""
+	@echo "----------------------------------------"
+	@echo "Compiled DruckerPrager support for mfront"
+	@echo "----------------------------------------"
+	@echo ""
+	$(MFRONT) --interface=generic DruckerPrager.mfront
 	$(MFRONT) --obuild
 
 
