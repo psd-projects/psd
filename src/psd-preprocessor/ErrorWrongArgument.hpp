@@ -177,7 +177,8 @@
 
   }
 
-  if(Prblm=="elasto_plastic" && Model=="von_mises" && !useMfront
+  if(Prblm=="elasto_plastic" &&
+     (Model=="von_mises" || Model=="drucker_prager") && !useMfront
      && (spc!=2 || Sequential))
     {
       cout <<
@@ -185,8 +186,22 @@
           " ** ERROR **\n"
           "===================================================================\n"
           "\n"
-          "Native von_mises currently supports parallel 2D plane strain only.\n"
-          "Use -dimension 2 without -sequential, or enable -useMfront.\n"
+          "Native von_mises and drucker_prager currently support parallel 2D plane strain only.\n"
+          "Use -dimension 2 without -sequential.\n"
+          "\n"
+          "===================================================================\n";
+      errorArgument = true;
+    }
+
+  if(Prblm=="elasto_plastic" && Model=="drucker_prager" && useMfront)
+    {
+      cout <<
+          "===================================================================\n"
+          " ** ERROR **\n"
+          "===================================================================\n"
+          "\n"
+          "The drucker_prager model is the native PSD implementation.\n"
+          "Remove -useMfront when selecting -model drucker_prager.\n"
           "\n"
           "===================================================================\n";
       errorArgument = true;
@@ -238,13 +253,15 @@
      }
 
 
-  if ( lag != 1){
+  if (lag != 1 && !(Prblm=="elasto_plastic" &&
+                    Model=="drucker_prager" && lag==2)){
       cout <<
           "===================================================================\n"
           " ** ERROR **\n"
           "===================================================================\n"
           "\n"
-          "The flag \033[1;31m-lagrange\033[0m only accepts \033[1;34m1\033[0m\n"
+          "The flag \033[1;31m-lagrange\033[0m only accepts \033[1;34m1\033[0m"
+          " (or 2 for native drucker_prager)\n"
           "  \033[1;31m-lagrange "<< lag << "\033[0m is not acceptable, please correct \n"
           "\n"
           "===================================================================\n";
@@ -317,14 +334,14 @@
      }
 
 
-  if ( Model != "hybrid_phase_field" && Model != "Mazar" && Model != "pseudo_nonlinear"  &&  Model != "Hujeux" &&  Model != "von_mises"
+  if ( Model != "hybrid_phase_field" && Model != "Mazar" && Model != "pseudo_nonlinear"  &&  Model != "Hujeux" &&  Model != "von_mises" && Model != "drucker_prager"
      ){
       cout <<
           "===================================================================\n"
           " ** ERROR **\n"
           "===================================================================\n"
           "\n"
-          "The flag \033[1;31m-model\033[0m only accepts \033[1;34mhybrid_phase_field|Mazar|pseudo_nonlinear|Hujeux|von_mises\033[0m\n"
+          "The flag \033[1;31m-model\033[0m only accepts \033[1;34mhybrid_phase_field|Mazar|pseudo_nonlinear|Hujeux|von_mises|drucker_prager\033[0m\n"
           "\033[1;31m-model "<< Model << "\033[0m is not an acceptable, please correct \n"
           "\n"
           "===================================================================\n";

@@ -30,7 +30,8 @@ MESH_FILES  = \
 ./$(CAD_FOLDER)/soil.$(MESH_EXTENSION) \
 ./$(CAD_FOLDER)/soil_dc.$(MESH_EXTENSION)  \
 ./$(CAD_FOLDER)/sparsity.$(MESH_EXTENSION) \
-./$(CAD_FOLDER)/tensile_crack.$(MESH_EXTENSION)
+./$(CAD_FOLDER)/tensile_crack.$(MESH_EXTENSION) \
+./$(CAD_FOLDER)/strip_footing_geomechanics.$(MESH_EXTENSION)
 
 
 CAD_FILES  = \
@@ -44,7 +45,8 @@ CAD_FILES  = \
 ./$(CAD_FOLDER)/soil.$(CAD_EXTENSION) \
 ./$(CAD_FOLDER)/soil_dc.$(CAD_EXTENSION)  \
 ./$(CAD_FOLDER)/sparsity.$(CAD_EXTENSION) \
-./$(CAD_FOLDER)/tensile_crack.$(CAD_EXTENSION)
+./$(CAD_FOLDER)/tensile_crack.$(CAD_EXTENSION) \
+./$(CAD_FOLDER)/strip_footing_geomechanics.$(CAD_EXTENSION)
 
 
 all-local: $(MESH_FILES)
@@ -55,6 +57,9 @@ all-local: $(MESH_FILES)
 	@echo ""
 	@echo " CAD file list: $(CAD_FILES)"
 
+./$(CAD_FOLDER)/strip_footing_geomechanics.$(MESH_EXTENSION): ./$(CAD_FOLDER)/strip_footing_geomechanics.$(CAD_EXTENSION)
+	$(MESHER) $(MESHER_PREFIX) ./$(CAD_FOLDER)/strip_footing_geomechanics.$(CAD_EXTENSION)
+	@echo ""
 
 ./$(CAD_FOLDER)/quater_cylinder.$(MESH_EXTENSION): ./$(CAD_FOLDER)/quater_cylinder.$(CAD_EXTENSION)
 	$(MESHER) $(MESHER_PREFIX) ./$(CAD_FOLDER)/quater_cylinder.$(CAD_EXTENSION)
@@ -137,6 +142,7 @@ copy-to-meshes:
 	@ls $(CAD_FOLDER) | egrep "^L_shaped_crack.$(MESH_EXTENSION)" | xargs -I {} cp $(CAD_FOLDER)/{} ../Meshes/.
 	@ls $(CAD_FOLDER) | egrep "^city.$(MESH_EXTENSION)" | xargs -I {} cp $(CAD_FOLDER)/{} ../Meshes/.
 	@ls $(CAD_FOLDER) | egrep "^quater_cylinder.$(MESH_EXTENSION)" | xargs -I {} cp $(CAD_FOLDER)/{} ../Meshes/.
+	@ls $(CAD_FOLDER) | egrep "^strip_footing_geomechanics.$(MESH_EXTENSION)" | xargs -I {} cp $(CAD_FOLDER)/{} ../Meshes/.
 
 tutorials: copy-to-meshes
 

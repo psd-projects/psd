@@ -81,6 +81,10 @@ if( (Prblm=="linear_elasticity" || Prblm=="elasto_plastic") && !fastmethod)
  writeIt
  "  load    \"Element_QF\"                           // Quadrature elements     \n";
 
+if(Prblm=="elasto_plastic" && Model=="drucker_prager")
+ writeIt
+ "  load    \"qf11to25\"                            // Higher-order quadrature \n";
+
 if(Prblm=="soildynamics" && Model=="Hujeux")
  writeIt
  "  load    \"Element_QF\"                           // Quadrature elements     \n"

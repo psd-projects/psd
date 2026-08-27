@@ -144,7 +144,7 @@ codeSnippet R""""(
    "                                                                              \n";
 
 
-  if(!useMfront)
+  if(!useMfront && Model=="von_mises")
   writeIt
    "                                                                              \n"
    "//============================================================================\n"
@@ -184,6 +184,41 @@ codeSnippet R""""(
    "   [SigOld11,SigOld22,SigOld12] = [0.,0.,0.]; SigOld33 = 0.;                 \n"
    "   pOld = 0.; dp = 0.;                                                       \n"
    "                                                                             \n";
+
+  if(!useMfront && Model=="drucker_prager")
+  writeIt
+   "                                                                              \n"
+   "//============================================================================\n"
+   "// ------- Native plane-strain Drucker-Prager quadrature state -------        \n"
+   "// Tensor components use Kelvin/Mandel ordering [xx,yy,zz,sqrt(2)xy].          \n"
+   "//============================================================================\n"
+   "                                                                              \n"
+   "   Sh [Eps11,Eps22,Eps12];                                                    \n"
+   "   Sh [Sig11,Sig22,Sig12];                                                    \n"
+   "   Sh [SigOld11,SigOld22,SigOld12];                                          \n"
+   "   Sh [SigTrial11,SigTrial22,SigTrial12];                                    \n"
+   "   Sh [EpOld11,EpOld22,EpOld12];                                              \n"
+   "   Sh [Ep11,Ep22,Ep12];                                                       \n"
+   "   Sh [ElasticTrial11,ElasticTrial22,ElasticTrial12];                         \n"
+   "   Sh [DevElastic11,DevElastic22,DevElastic12];                               \n"
+   "   Sh [Normal11,Normal22,Normal12];                                           \n"
+   "   Sh [Correction11,Correction22,Correction12];                               \n"
+   "                                                                              \n"
+   "   Ph Eps33, Sig33, SigOld33, SigTrial33;                                     \n"
+   "   Ph EpOld33, Ep33, ElasticTrial33, DevElastic33, Normal33, Correction33;    \n"
+   "   Ph meanElastic, normElastic, rhoTrial, pressureTrial, criterion1, criterion2;\n"
+   "   Ph plasticSwitch, smoothSwitch, apexSwitch;                               \n"
+   "   Ph lambdaSmooth, lambdaApex, curvatureFactor;                             \n"
+   "                                                                              \n"
+   "   [Sig11,Sig22,Sig12] = [0.,0.,0.]; Sig33 = 0.;                             \n"
+   "   [SigOld11,SigOld22,SigOld12] = [0.,0.,0.]; SigOld33 = 0.;                 \n"
+   "   [EpOld11,EpOld22,EpOld12] = [0.,0.,0.]; EpOld33 = 0.;                     \n"
+   "   [Ep11,Ep22,Ep12] = [0.,0.,0.]; Ep33 = 0.;                                 \n"
+   "                                                                              \n"
+   "   Vh def(reactionTest);                                                      \n"
+   "   [reactionTest,reactionTest1] =                                             \n"
+   "     [0.,(abs(y-10.)<1.e-8 && x<=footingWidth+1.e-8)];                       \n"
+   "                                                                              \n";
   }
   
  if(spc==3){
