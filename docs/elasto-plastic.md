@@ -446,35 +446,21 @@ The results validate PSD's native Von-Mises plasticity implementation against th
 ### Native Drucker–Prager strip-footing problem (without MFront)
 #### Associated perfect plasticity in two-dimensional plane strain
 
-> 💡 **Note**: This tutorial uses PSD's native Drucker–Prager implementation.
-> Do not add `-useMfront`: this model performs its return mapping and consistent
-> tangent update directly in PSD.
+> 💡 **Note**: This tutorial uses PSD's native Drucker–Prager implementation. Do not add `-useMfront`: this model performs its return mapping and consistent tangent update directly in PSD.
 
-> 💡 **Scope**: The current implementation is small-strain, plane-strain,
-> associated, perfectly plastic Drucker–Prager. It has no hardening, tension
-> cut-off, dilatancy angle distinct from the friction angle, or three-dimensional
-> implementation.
+> 💡 **Scope**: The current implementation is small-strain, plane-strain, associated, perfectly plastic Drucker–Prager. It has no hardening, tension cut-off, dilatancy angle distinct from the friction angle, or three-dimensional implementation.
 
 ### Introduction
 
-This tutorial studies a displacement-controlled strip footing. Symmetry about
-the footing centreline permits the right half of the physical problem to be
-represented by the square domain
+This tutorial studies a displacement-controlled strip footing. Symmetry about the footing centreline permits the right half of the physical problem to be represented by the square domain
 
 $$
 \Omega=[0,10]\times[0,10].
 $$
 
-The represented half-width of the footing is $B=1$. A downward settlement
-$\bar u$ is imposed on the top segment $0\le x\le B$, while the rest of the top
-surface is traction-free. The bottom is restrained vertically and both vertical
-sides are restrained horizontally. These lateral conditions reproduce the
+The represented half-width of the footing is $B=1$. A downward settlement $\bar u$ is imposed on the top segment $0\le x\le B$, while the rest of the top surface is traction-free. The bottom is restrained vertically and both vertical sides are restrained horizontally. These lateral conditions reproduce the
 reference benchmark of Čermák, Sysala, and Valdman.
 
-<figure style="text-align: center;">
-  <img src="_images/elasto-plastic/drucker-prager-geometry.png" width="58%" alt="Triangular strip-footing mesh and boundary conditions">
-  <figcaption><em>Figure: Shared 200-triangle strip-footing mesh. Boundary numbers and conditions are listed below.</em></figcaption>
-</figure>
 
 The Gmsh physical labels are:
 
@@ -512,10 +498,7 @@ $$
 K=\frac{E}{3(1-2\nu)}.
 $$
 
-Plane strain means $\varepsilon_{zz}=0$, but $\sigma_{zz}$ and
-$\varepsilon^p_{zz}$ are generally non-zero and must be retained by the
-constitutive update. PSD stores symmetric tensors in Kelvin/Mandel ordering,
-
+Plane strain means $\varepsilon_{zz}=0$, but $\sigma_{zz}$ and $\varepsilon^p_{zz}$ are generally non-zero and must be retained by the constitutive update. PSD stores symmetric tensors in Kelvin/Mandel ordering,
 $$
 [xx,yy,zz,\sqrt{2}xy],
 $$
@@ -535,8 +518,7 @@ p=\frac{1}{3}\operatorname{tr}(\boldsymbol\sigma),
 \sqrt{J_2}=\frac{\|\operatorname{dev}\boldsymbol\sigma\|}{\sqrt2}.
 $$
 
-For the plane-strain parameter mapping used by the reference implementation,
-the friction angle $\phi$ and physical cohesion $c_0$ are converted to
+For the plane-strain parameter mapping used by the reference implementation, the friction angle $\phi$ and physical cohesion $c_0$ are converted to
 
 $$
 \eta=\frac{3\tan\phi}{\sqrt{9+12\tan^2\phi}},
@@ -552,14 +534,11 @@ $$
 \qquad \dot\lambda\ge0.
 $$
 
-Consequently the friction parameter also controls plastic volumetric strain.
-Do not substitute another inscribed or circumscribed Drucker–Prager mapping
-without regenerating the reference curve.
+Consequently the friction parameter also controls plastic volumetric strain. Do not substitute another inscribed or circumscribed Drucker–Prager mapping without regenerating the reference curve.
 
 #### Elastic predictor and return classification
 
-At Newton iterate $k$, using the plastic strain from the last converged load
-step, PSD forms
+At Newton iterate $k$, using the plastic strain from the last converged load step, PSD forms
 
 $$
 \boldsymbol\varepsilon^{e,\mathrm{tr}}
@@ -655,11 +634,7 @@ The tangent is elastic on elastic points and zero at apex points. The measured r
 
 ### Finite-element and Newton discretization
 
-The benchmark uses continuous P2 displacement on 200 triangular cells and the
-seven-point `FEQF5` triangle rule for stress, plastic strain, branch indicators,
-and tangent components. Although the Gmsh geometry itself uses three-node
-triangles, `-lagrange 2` makes the displacement approximation quadratic by
-adding mid-edge degrees of freedom.
+The benchmark uses continuous P2 displacement on 200 triangular cells and the seven-point `FEQF5` triangle rule for stress, plastic strain, branch indicators, and tangent components. Although the Gmsh geometry itself uses three-node triangles, `-lagrange 2` makes the displacement approximation quadratic by adding mid-edge degrees of freedom.
 
 The equilibrium residual is
 
@@ -726,8 +701,7 @@ The options mean:
 * `-lagrange 2`: use P2 displacement;
 * `-postprocess u`: write the displacement time series for ParaView.
 
-There is no `-tractionconditions` argument because the footing is loaded by a
-prescribed displacement. There is also no `-useMfront` argument.
+There is no `-tractionconditions` argument because the footing is loaded by a prescribed displacement. There is also no `-useMfront` argument.
 
 The generated `ControlParameters.edp` contains:
 
@@ -736,7 +710,6 @@ real E             = 1.e7,
      nu            = 0.48,
      cohesion      = 450.,
      frictionAngle = 20.*pi/180.;
-
 // Elastic constants and the benchmark's Drucker-Prager mapping
 real lambda = E*nu/((1.+nu)*(1.-2.*nu)),
      mu     = E/(2.*(1.+nu)),
@@ -884,9 +857,7 @@ with the same seven-point integration rule:
 + on(Dbc3On,DirichletBc3);
 </code></pre>
 
-Only after global Newton convergence are displacement and plastic strain
-committed. This is important: committing quadrature history inside a Newton
-iteration would make the result iteration-path dependent.
+Only after global Newton convergence are displacement and plastic strain committed. This is important: committing quadrature history inside a Newton iteration would make the result iteration-path dependent.
 
 ### Step 2: Solving
 
@@ -895,21 +866,22 @@ From the generated problem directory, run:
 <pre><code>
 PSD_Solve -np 1 Main.edp -mesh strip_footing_tri.msh -v 0 -ns -nw
 </code></pre>
-
-`-np 1` still uses PSD's parallel execution path. The benchmark has also been
-checked with `-np 2`; both rank counts agree to round-off.
-
-Each converged increment prints a machine-readable record:
+`-np 1` still uses PSD's parallel execution path. The benchmark has also been checked with `-np 2`; both rank counts agree to round-off. Each converged increment prints a machine-readable record:
 
 <pre><code>
-DP_RESULT,step,settlement,normalized_pressure,newton_iterations,relative_residual
-DP_RESULT,1,2.500000000000000e-03,1.791689062612385e+01,8,1.106599574054040e-09
+-----------------------------------------------------------------
+TimeStep	Settlement	Pressure	NRiterations	RelResidual
+-----------------------------------------------------------------
+1	2.4999999999999996e-03	1.7916890626123848e+01	8	1.1066007614253548e-09
+2	4.9999999999999992e-03	1.9081276532284090e+01	10	2.3553150792535567e-10
+3	7.4999999999999997e-03	1.9335735675763914e+01	11	2.2511946473898397e-14
 ...
-DP_RESULT,12,3.000000000000000e-02,1.971712453439382e+01,12,2.565316703080467e-14
+11	2.7499999999999997e-02	1.9705279787739919e+01	11	1.4104899336504576e-10
+12	2.9999999999999999e-02	1.9717124534393804e+01	12	2.6798352837893773e-14
+
 </code></pre>
 
-The reported pressure is the vertical footing reaction divided by
-$B c_0$. PSD evaluates the reaction by internal virtual work using a virtual
+The reported pressure is the vertical footing reaction divided by $B c_0$. PSD evaluates the reaction by internal virtual work using a virtual
 vertical displacement equal to one on the footing degrees of freedom.
 
 ### Step 3: PSD postprocessing in ParaView
@@ -922,27 +894,32 @@ VTUs_.../Solution_0000.vtu
 ...
 VTUs_.../Solution_0011.vtu
 </code></pre>
-
-Open `Solution.pvd` in ParaView, choose **U** as the vector field, and apply
-**Warp By Vector**. The figure below uses the actual PSD `Solution_*.vtu` data;
+Open `Solution.pvd` in ParaView, choose **U** as the vector field, and apply **Warp By Vector**. The figure below uses the actual PSD `Solution_*.vtu` data;
 the warp factor is 30 so the deformation is visible on the $10\times10$ domain.
 
 <figure style="text-align: center;">
-  <img src="_images/elasto-plastic/drucker-prager-displacement-steps.png" width="98%" alt="PSD displacement magnitude at three settlement increments">
-  <figcaption><em>Figure: Native PSD displacement magnitude at steps 1, 6, and 12. Deformation is amplified 30 times.</em></figcaption>
+  <!-- First row -->
+  <img src="_images/elasto-plastic/test_psd_dp_t0.png" width="22%" alt="Warped displacement field at t0" style="margin-right:1%;">
+  <img src="_images/elasto-plastic/test_psd_dp_t4.png" width="22%" alt="Warped displacement field at t4" style="margin-right:1%;">
+  <img src="_images/elasto-plastic/test_psd_dp_t8.png" width="22%" alt="Warped displacement field at t8">
+  <img src="_images/elasto-plastic/test_psd_dp_t12.png" width="22%" alt="Warped displacement field at t12">
+  <br>
+  <figcaption><em>Figure: Warped displacement field evolution — from left \(t_0, t_4, t_8, t_{12}\). Deformation is amplified 30 times.</em></figcaption>
 </figure>
 
-You have now completed a native, parallel, displacement-controlled
-Drucker-Prager analysis.
+You have now completed a native, parallel, displacement-controlled Drucker-Prager analysis.
 
 ### Validation results
 
 The pressure–settlement curves from PSD and DOLFINx are visually coincident:
 
 <figure style="text-align: center;">
-  <img src="_images/elasto-plastic/drucker-prager-validation-curve.png" width="72%" alt="PSD and DOLFINx Drucker-Prager pressure-settlement comparison">
-  <figcaption><em>Figure: Normalized footing pressure from native PSD and the independent DOLFINx implementation.</em></figcaption>
+  <img src="_images/elasto-plastic/comp-dp.png" width="45%" alt="Validation of displacement movement of inner border">
+  <figcaption style="max-width: 600px; margin: 0 auto; font-style: italic;">
+    Figure: Normalized footing pressure from native PSD and the independent DOLFINx implementation.
+  </figcaption>
 </figure>
+
 
 Selected values are:
 
@@ -966,14 +943,7 @@ $$
 
 The constitutive return and strip-footing parameters follow:
 
-* M. Čermák, S. Sysala, and J. Valdman, [*Efficient and flexible MATLAB
-  implementation of 2D and 3D elastoplastic
-  problems*](https://arxiv.org/abs/1805.04155), Applied Mathematics and
-  Computation 355 (2019), 595–614;
-* the accompanying [`plasticity_DP_2D/constitutive_problem.m`
-  implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
-* the [COMET-FEniCSx quadrature-state
-  pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html)
-  for nonlinear plasticity assembly.
-
+* M. Čermák, S. Sysala, and J. Valdman, [*Efficient and flexible MATLAB implementation of 2D and 3D elastoplastic problems*](https://arxiv.org/abs/1805.04155), Applied Mathematics and Computation 355 (2019), 595–614;
+* the accompanying [`plasticity_DP_2D/constitutive_problem.m_implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
+* the [COMET-FEniCSx quadrature-state pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html) for nonlinear plasticity assembly.
 
