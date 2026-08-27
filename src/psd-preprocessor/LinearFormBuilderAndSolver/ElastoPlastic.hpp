@@ -2,7 +2,7 @@
 // ------ Elasto-Plastic Mechanics for the LinearFormBuilderAndSolver.edp file ------
 //=====================================================================================
 
-if(useMfront){
+if(useMfront && Model!="drucker_prager"){
  writeIt
  "                                                                                \n"
  "if(mpirank==0)                                                                  \n"
@@ -580,7 +580,185 @@ for (int i=0; i<TlMaxItr; i++) {
 
 }
 
-if(useMfront){
+if(useMfront && Model=="drucker_prager"){
+codeSnippet R""""(
+
+if(mpirank==0) {
+  cout.precision(16);
+  cout << "-----------------------------------------------------------------" << endl;
+  cout << "TimeStep\tSettlement\tPressure\tNRiterations\tRelResidual" << endl;
+  cout << "-----------------------------------------------------------------" << endl;
+}
+
+//==============================================================================
+//  ------------------------------------------------------------
+//  ------- MFront Drucker-Prager algorithm -------
+//  ------------------------------------------------------------
+//    Loop 1 : TlMaxItr;             # Prescribed-settlement loop
+//      update_settlement();
+//      initialize_increment();      # Du = 0
+//      restore_converged_state();   # MFront plastic strain
+//      assemble_linear_system();
+//      Loop 2 : NrMaxItr;           # Newton loop
+//        solve_linear_system();
+//        update_increment();        # Du += du
+//        compute_total_strain();
+//        restore_mfront_state();     # Never reuse a failed Newton iterate
+//        mfront_update();            # Stress, state, consistent tangent
+//        assemble_linear_system();
+//        exit_if_converged();
+//      commit_displacement_and_mfront_state();
+//      calculate_footing_reaction();
+//  ------------------------------------------------------------
+//==============================================================================
+
+// MFront uses the same associated, perfectly plastic plane-strain model as the
+// native backend. Each FEQF5 integration point owns its plastic-strain history.
+
+for (int i=0; i<TlMaxItr; i++) {
+
+  // --- update_settlement ---- //
+  tl = real(i+1)/TlMaxItr;
+
+  // --- initialize_increment ---- //
+  startProcedure("increment initialization",t0)
+  Du[] = 0.;
+  du[] = 0.;
+  niter = 0;
+  endProcedure("increment initialization",t0)
+
+  // --- restore_converged_state ---- //
+  startProcedure("converged state restoration",t0)
+  [Isv1,Isv2,Isv3,Isv4] = [IsvOld1,IsvOld2,IsvOld3,IsvOld4];
+  [Mt11,Mt12,Mt13,Mt22,Mt23,Mt33]
+      = [lambda+2.*mu,lambda,0.,lambda+2.*mu,0.,2.*mu];
+  endProcedure("converged state restoration",t0)
+
+  // --- assemble_linear_system ---- //
+  startProcedure("linear-system assembly",t0)
+  ALoc = elast(Vh,Vh,solver=CG,sym=1);
+  A = ALoc;
+  b = elast(0,Vh);
+  endProcedure("linear-system assembly",t0)
+
+  // --- calculate_residual ---- //
+  startProcedure("residual checking",t0)
+  b = b .* DP;
+  real resLoc = b.l2;
+  real resGather = 0.;
+  resLoc = resLoc*resLoc;
+  mpiAllReduce(resLoc,resGather,mpiCommWorld,mpiSUM);
+  nRes0 = sqrt(resGather);
+  nRes = nRes0;
+  endProcedure("residual checking",t0)
+
+  while(nRes/(nRes0+1.e-30) > EpsNrCon && niter < NrMaxItr) {
+    niter++;
+
+    // --- solve_linear_system ---- //
+    startProcedure("linear-system solving",t0)
+    set(A,sparams=" -ksp_type cg -ksp_rtol 1e-11 ");
+    du[] = A^-1*b;
+    endProcedure("linear-system solving",t0)
+
+    // --- update_increment ---- //
+    startProcedure("increment update",t0)
+    Du[] += du[];
+    endProcedure("increment update",t0)
+
+    // --- compute_total_strain ---- //
+    startProcedure("total strain computation",t0)
+    [Eps11,Eps22,Eps12] =
+      [dx(u)+dx(Du),dy(u1)+dy(Du1),
+       (dy(u)+dy(Du)+dx(u1)+dx(Du1))/SQ2];
+    endProcedure("total strain computation",t0)
+
+    // Restore the last converged history before every constitutive call. The
+    // state returned by a previous, unconverged Newton iterate is only a trial.
+    [Isv1,Isv2,Isv3,Isv4] = [IsvOld1,IsvOld2,IsvOld3,IsvOld4];
+
+    startProcedure("stress update via MFront",t0)
+    PsdMfrontHandler(
+      MaterialBehaviour,
+      mfrontBehaviourHypothesis      = MaterialHypothesis,
+      mfrontPropertyNames            = PropertyNames,
+      mfrontPropertyValues           = PropertyValues,
+      mfrontMaterialTensor           = Mt11[],
+      mfrontStrainTensor             = Eps11[],
+      mfrontStressTensor             = Sig11[],
+      mfrontStateVariable            = Isv1[],
+      mfrontQuadraturePointsPerCell  = 7
+    );
+    endProcedure("stress update via MFront",t0)
+
+    // --- assemble_linear_system ---- //
+    startProcedure("linear-system assembly",t0)
+    ALoc = elast(Vh,Vh,solver=CG,sym=1);
+    A = ALoc;
+    b = elast(0,Vh);
+    endProcedure("linear-system assembly",t0)
+
+    // --- calculate_residual ---- //
+    startProcedure("residual checking",t0)
+    b = b .* DP;
+    resLoc = b.l2;
+    resLoc = resLoc*resLoc;
+    mpiAllReduce(resLoc,resGather,mpiCommWorld,mpiSUM);
+    nRes = sqrt(resGather);
+    if(niter==1)
+      nRes0 = max(nRes,1.);
+    endProcedure("residual checking",t0)
+  }
+
+  if(nRes/(nRes0+1.e-30) > EpsNrCon) {
+    if(mpirank==0)
+      cout << "Error: MFront Drucker-Prager Newton iterations maxed out at step "
+           << i << endl;
+    exit(1203);
+  }
+
+  startProcedure("state commit",t0)
+  u[] += Du[];
+  [IsvOld1,IsvOld2,IsvOld3,IsvOld4] = [Isv1,Isv2,Isv3,Isv4];
+  endProcedure("state commit",t0)
+
+  real reactionLocal = intN(Th,qforder=5)(
+    [Sig11,Sig22,Sig12]'*epsilon(reactionTest));
+  real reactionGlobal = 0.;
+  mpiAllReduce(reactionLocal,reactionGlobal,mpiCommWorld,mpiSUM);
+  real normalizedPressure = -reactionGlobal/(footingWidth*cohesion);
+
+  if(mpirank==0)
+    cout.scientific << i+1 << "\t" << tl*maxSettlement << "\t"
+         << normalizedPressure << "\t" << niter << "\t"
+         << nRes/(nRes0+1.e-30) << endl;
+)"""";
+
+ if(ParaViewPostProcess){
+ writeIt
+ "                                                                                \n"
+ "  startProcedure(\"ParaView plotting\",t0)                                      \n"
+ "    savevtk(\"VTUs/Solution.vtu\",Th,                                           \n";
+
+ if(PostProcess=="u")
+ writeIt
+ "            PlotVec(u),dataname=\"U\",                                          \n";
+
+ writeIt
+ "            order=vtuorder,append=i ? true : false);                            \n"
+ "  endProcedure(\"ParaView plotting\",t0)                                        \n";
+ }
+
+ if(debug)
+ writeIt
+ "  macro viz(i)i//                                                               \n"
+ "  plotMPI(Th,u,P1,viz,real,wait=0,cmm=\"displacement\")                         \n";
+
+ writeIt
+ "}                                                                               \n";
+}
+
+if(useMfront && Model!="drucker_prager"){
  if(spc==2)
  writeIt
  "    [Eps11,Eps22,Eps12] = epsilon(u);                                           \n";

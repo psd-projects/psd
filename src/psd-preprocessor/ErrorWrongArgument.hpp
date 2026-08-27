@@ -178,7 +178,7 @@
   }
 
   if(Prblm=="elasto_plastic" &&
-     (Model=="von_mises" || Model=="drucker_prager") && !useMfront
+     ((Model=="von_mises" && !useMfront) || Model=="drucker_prager")
      && (spc!=2 || Sequential))
     {
       cout <<
@@ -186,22 +186,8 @@
           " ** ERROR **\n"
           "===================================================================\n"
           "\n"
-          "Native von_mises and drucker_prager currently support parallel 2D plane strain only.\n"
+          "Drucker_prager and native von_mises currently support parallel 2D plane strain only.\n"
           "Use -dimension 2 without -sequential.\n"
-          "\n"
-          "===================================================================\n";
-      errorArgument = true;
-    }
-
-  if(Prblm=="elasto_plastic" && Model=="drucker_prager" && useMfront)
-    {
-      cout <<
-          "===================================================================\n"
-          " ** ERROR **\n"
-          "===================================================================\n"
-          "\n"
-          "The drucker_prager model is the native PSD implementation.\n"
-          "Remove -useMfront when selecting -model drucker_prager.\n"
           "\n"
           "===================================================================\n";
       errorArgument = true;
@@ -261,7 +247,7 @@
           "===================================================================\n"
           "\n"
           "The flag \033[1;31m-lagrange\033[0m only accepts \033[1;34m1\033[0m"
-          " (or 2 for native drucker_prager)\n"
+          " (or 2 for drucker_prager)\n"
           "  \033[1;31m-lagrange "<< lag << "\033[0m is not acceptable, please correct \n"
           "\n"
           "===================================================================\n";

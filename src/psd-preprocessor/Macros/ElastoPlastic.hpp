@@ -171,7 +171,7 @@ if(spc==2)
  "//=============================================================================\n";
 
  for(int i=0; i<dirichletconditions; i++) {
- if(useMfront) writeIt
+ if(useMfront && Model!="drucker_prager") writeIt
  "                                                                               \n"
  "  IFMACRO(Dbc"<<i<<"Ux) IFMACRO(!Dbc"<<i<<"Uy)                                 \n"
  "    NewMacro DirichletBc"<<i<<"() Ux=Dbc"<<i<<"Ux  EndMacro                    \n"
@@ -186,7 +186,7 @@ if(spc==2)
  "  ENDIFMACRO ENDIFMACRO                                                        \n"
  "                                                                               \n";
 
- if(!useMfront) writeIt
+ if(!useMfront || Model=="drucker_prager") writeIt
  "                                                                               \n"
  "  IFMACRO(Dbc"<<i<<"Ux) IFMACRO(!Dbc"<<i<<"Uy)                                 \n"
  "    NewMacro DirichletBc"<<i<<"() Ux=(niter==0)*(Dbc"<<i<<"Ux-u-Du) EndMacro    \n"
