@@ -931,8 +931,17 @@ The example uses the mesh `french_alps_two_volumes.msh` with the following mater
 | 11           | 1800.0         | 17.0                       | 30.0                          |
 | 22           | 1500.0         | 12.0                       | 22.0                          |
 
-Use one consistent system of units for the mesh coordinates, material properties, source parameters, and time step. For each material $m$, PSD
-computes the Lamé parameters as
+Use one consistent system of units for the mesh coordinates, material properties, source parameters, and time step.
+
+<figure style="text-align: center;">
+  <!-- First row -->
+  <img src="https://github.com/user-attachments/assets/2521cad4-9101-4921-a258-b41d20ef7ad4" width="45%" alt="Mesh" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/357db0db-2faf-47f6-9212-c66a4693138d" width="45%" alt="Regions" style="margin-right:1%;">
+  <br>
+  <figcaption><em>Figure: Mesh of use and the two regions.</em></figcaption>
+</figure>
+
+For each material $m$, PSD computes the Lamé parameters as
 $$
 \mu_m = \rho_m c_{s,m}^2,
 \qquad
@@ -1089,13 +1098,18 @@ visualizations for this example include:
 - clipping or slicing the three-dimensional domain through the source center;
 - applying a common color scale to several time instants.
 
-<!-- Add the Tutorial 5 multi-material ParaView screenshot here. Example:
+
 <figure style="text-align: center;">
-  <img src="_images/soildynamics/multimaterial-ricker.png" width="75%"
-       alt="Wave propagation through the two-material soil domain">
-  <figcaption><em>Figure: Wave propagation and interaction with the material interface.</em></figcaption>
+  <!-- First row -->
+  <img src="https://github.com/user-attachments/assets/4b3f427e-a004-4179-a609-fc46dcac4d0c" width="30%" alt="Warped displacement field at t0" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/13fc5f36-2390-40f2-bf21-4d76f6940caf" width="30%" alt="Warped displacement field at t4" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/c0023ea0-7560-4084-92f6-aa90250c4bea" width="30%" alt="Warped displacement field at t8">
+  <br>
+  <img src="https://github.com/user-attachments/assets/b7fd1dba-3702-405a-b385-eacb17404e08" width="30%" alt="Warped displacement field at t0" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/5f77265d-60f5-4aa1-aff3-c49c1e09fbfb" width="30%" alt="Warped displacement field at t4" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/e1393f07-4211-4348-8ac2-b0df9dc81bde" width="30%" alt="Warped displacement field at t8">
+  <figcaption><em>Figure: Warped displacement field evolution — from left \(t_50, t_60, ..., t_{100}\).</em></figcaption>
 </figure>
--->
 
 The expected result is a wave field originating from the four-point source and propagating through both volumes. Changes in density and wave velocity produce partial transmission and reflection at the interface, while the paraxial boundary reduces artificial reflections from the exterior surface.
 
