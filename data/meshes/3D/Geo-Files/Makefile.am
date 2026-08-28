@@ -1,5 +1,5 @@
-LIST_COMPILE= cube.geo bar.geo  tensile_crack.geo  bar_dynamic.geo quasistatic.geo  soil.geo L_shape.geo
-MESH_FILES  = cube.msh bar.msh tensile_crack.msh bar_dynamic.msh  quasistatic.msh  soil.msh L_shape.msh
+LIST_COMPILE= cube.geo bar.geo  tensile_crack.geo  bar_dynamic.geo quasistatic.geo  soil.geo L_shape.geo french_alps_two_volumes.geo
+MESH_FILES  = cube.msh bar.msh tensile_crack.msh bar_dynamic.msh  quasistatic.msh  soil.msh L_shape.msh french_alps_two_volumes.msh
 
 all-local: $(MESH_FILES)
 	@echo ""
@@ -40,6 +40,10 @@ soil.msh: soil.geo
 	$(GMSH) -1 soil.msh -o soil.msh -format msh2 -refine -v 0
 	@echo ""
 
+french_alps_two_volumes.msh: french_alps_two_volumes.geo
+	$(GMSH) -3 french_alps_two_volumes.geo -o french_alps_two_volumes.msh -format msh2 -v 0
+	@echo ""
+
 copy-to-meshes:
 	@mkdir -p ../Meshes
 	@ls | egrep "^soil.msh" | xargs -I {} cp {} ../Meshes/.
@@ -48,6 +52,8 @@ copy-to-meshes:
 	@ls | egrep "^quasistatic.msh" | xargs -I {} cp {} ../Meshes/.
 	@ls | egrep "^bar_dynamic.msh" | xargs -I {} cp {} ../Meshes/.
 	@ls | egrep "^tensile_crack.msh" | xargs -I {} cp {} ../Meshes/.
+	@ls | egrep "^cube.msh" | xargs -I {} cp {} ../Meshes/.
+	@ls | egrep "^french_alps_two_volumes.msh" | xargs -I {} cp {} ../Meshes/.
 
 tutorials: copy-to-meshes
 
