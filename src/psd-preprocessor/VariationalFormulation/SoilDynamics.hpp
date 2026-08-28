@@ -9,40 +9,41 @@ writeIt
 "//==============================================================================                \n"
 "                                                                                                \n"
 "varf soildynamics( def(du) , def(v) )                                                           \n"
-"                                                                                                \n"
-"    = intN(Th,qforder=3)                                                                        \n"
-"  (                                                                                             \n"
-"      (def(du)'*def(v))*c[0]                                                                    \n"
-"    + (divergence(du)*divergence(v))*c[1]                                                       \n"
-"    + (epsilon(du)'*epsilon(v))*c[2]                                                            \n"
-"  )                                                                                             \n"
-"                                                                                                \n"
-"    + intN(Th,qforder=3)                                                                        \n"
-"  (                                                                                             \n"
-"      (def(uold)'*def(v))*c[0]                                                                  \n"
-"    + (def(vold)'*def(v))*c[3]                                                                  \n"
-"    + (def(aold)'*def(v))*c[4]                                                                  \n";
-
-if(TimeDiscretization=="generalized_alpha" || TimeDiscretization=="hht_alpha")
- writeIt
- "    - (divergence(uold)*divergence(v))*c[5]                                                    \n"
- "    - (epsilon(uold)'*epsilon(v))*c[6]                                                         \n";
+"                                                                                                \n";
 
 writeIt
-"  )                                                                                             \n"
-"                                                                                                \n"
-"    + intN1(Th,qforder=3,PAlabels)                                                              \n"
-"  (                                                                                             \n"
-"      c[7]*(  PA0(du)'*def(v)  )                                                                \n"
-"  )                                                                                             \n"
-"                                                                                                \n"
-"    + intN1(Th,qforder=3,PAlabels)                                                              \n"
-"  (                                                                                             \n"
-"      c[7]*(  PA0(uold)'*def(v)  )                                                              \n"
-"    - c[8]*(  PA0(vold)'*def(v)  )                                                              \n"
-"    - c[9]*(  PA0(aold)'*def(v)  )                                                              \n"
-"  )                                                                                             \n";
+ "    = intN(Th,qforder=3)                                                                        \n"
+ "  (                                                                                             \n"
+ "      (def(du)'*def(v))*c0                                                                      \n"
+ "    + (divergence(du)*divergence(v))*c1                                                         \n"
+ "    + (epsilon(du)'*epsilon(v))*c2                                                              \n"
+ "  )                                                                                             \n"
+ "                                                                                                \n"
+ "    + intN(Th,qforder=3)                                                                        \n"
+ "  (                                                                                             \n"
+ "      (def(uold)'*def(v))*c0                                                                    \n"
+ "    + (def(vold)'*def(v))*c3                                                                    \n"
+ "    + (def(aold)'*def(v))*c4                                                                    \n";
 
+ if(TimeDiscretization=="generalized_alpha" || TimeDiscretization=="hht_alpha")
+  writeIt
+  "    - (divergence(uold)*divergence(v))*c5                                                      \n"
+  "    - (epsilon(uold)'*epsilon(v))*c6                                                           \n";
+
+ writeIt
+ "  )                                                                                             \n"
+ "                                                                                                \n"
+ "    + intN1(Th,qforder=3,PAlabels)                                                              \n"
+ "  (                                                                                             \n"
+ "      c7*(  PA0(du)'*def(v)  )                                                                  \n"
+ "  )                                                                                             \n"
+ "                                                                                                \n"
+ "    + intN1(Th,qforder=3,PAlabels)                                                              \n"
+ "  (                                                                                             \n"
+ "      c7*(  PA0(uold)'*def(v)  )                                                                \n"
+ "    - c8*(  PA0(vold)'*def(v)  )                                                                \n"
+ "    - c9*(  PA0(aold)'*def(v)  )                                                                \n"
+ "  )                                                                                             \n";
 if(doublecouple=="unused"){
  writeIt
  "                                                                                               \n";
@@ -102,15 +103,15 @@ if(Model=="pseudo_nonlinear")
  "                                                                                                \n"
  "    - intN(Th,qforder=3)                                                                        \n"
  "  (                                                                                             \n"
- "      (def(uNL)'*def(v))*c[0]                                                                   \n"
- "    + (divergence(uNL)*divergence(v))*c[1]                                                      \n"
- "    + (epsilon(uNL)'*epsilon(v))*c[2]                                                           \n"
+ "      (def(uNL)'*def(v))*c0                                                                     \n"
+ "    + (divergence(uNL)*divergence(v))*c1                                                        \n"
+ "    + (epsilon(uNL)'*epsilon(v))*c2                                                             \n"
  "  )                                                                                             \n"
  "                                                                                                \n"
  "                                                                                                \n"
  "    - intN1(Th,qforder=3,PAlabels)                                                              \n"
  "  (                                                                                             \n"
- "      c[7]*(  PA0(uNL)'*def(v)  )                                                               \n"
+ "      c7*(  PA0(uNL)'*def(v)  )                                                                 \n"
  "  )                                                                                             \n"
  "                                                                                                \n";
 
@@ -119,16 +120,16 @@ if(Model=="Hujeux")
  "                                                                                                \n"
  "    - intN(Th,qforder=3)                                                                        \n"
  "  (                                                                                             \n"
- "      (def(uNL)'*def(v))*c[0]                                                                   \n"
+ "      (def(uNL)'*def(v))*c0                                                                     \n"
  "      +  defSh(Sig) ' * Epsl(v)                                                                  \n"
- "   /*+ (divergence(uNL)*divergence(v))*c[1]                                                     \n"
- "     + (epsilon(uNL)'*epsilon(v))*c[2] */                                                       \n"
+ "   /*+ (divergence(uNL)*divergence(v))*c1                                                       \n"
+ "     + (epsilon(uNL)'*epsilon(v))*c2 */                                                         \n"
  "  )                                                                                             \n"
  "                                                                                                \n"
  "                                                                                                \n"
  "    - intN1(Th,qforder=3,PAlabels)                                                              \n"
  "  (                                                                                             \n"
- "      c[7]*(  PA0(uNL)'*def(v)  )                                                               \n"
+ "      c7*(  PA0(uNL)'*def(v)  )                                                                 \n"
  "  )                                                                                             \n"
  "                                                                                                \n";
 

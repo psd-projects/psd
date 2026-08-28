@@ -28,70 +28,136 @@
 
 writeHeader;
 
+if(multimaterial==1){
  writeIt
  "                                                                                \n"
  "//==============================================================================\n"
  "// ------- Variational formulation constant parameters -------                  \n"
  "//==============================================================================\n"
  "                                                                                \n"
- "  real[int] c(10);                                                              \n"
+ "  real c0, c1, c2, c3, c4, c5, c6, c7, c8, c9;                                \n"
  "                                                                                \n";
 
  if(TimeDiscretization=="generalized_alpha")
   writeIt
-  "  c[0] =   rho*(1.-alpm)/(beta*dt*dt)                                          ;\n"
-  "  c[1] =   lambda*(1.-alpf)                                                    ;\n"
-  "  c[2] =   2.*mu*(1.-alpf)                                                     ;\n"
-  "  c[3] =   rho*(1.-alpm)/(beta*dt)                                             ;\n"
-  "  c[4] =   rho*((1.-alpm)/2./beta -1.)                                         ;\n"
-  "  c[5] =   lambda*alpf                                                         ;\n"
-  "  c[6] =   2*mu*alpf                                                           ;\n"
-  "  c[7] =   rho*(1.-alpf)*gamma/beta/dt                                         ;\n"
-  "  c[8] =   rho*(1.-gamma*(1-alpf)/beta)                                        ;\n"
-  "  c[9] =   rho*(1.-alpf)*dt*(1.-gamma/(2.*beta))                               ;\n"
+  "  c0 =   rho*(1.-alpm)/(beta*dt*dt)                                            ;\n"
+  "  c1 =   lambda*(1.-alpf)                                                      ;\n"
+  "  c2 =   2.*mu*(1.-alpf)                                                       ;\n"
+  "  c3 =   rho*(1.-alpm)/(beta*dt)                                               ;\n"
+  "  c4 =   rho*((1.-alpm)/2./beta -1.)                                           ;\n"
+  "  c5 =   lambda*alpf                                                           ;\n"
+  "  c6 =   2*mu*alpf                                                             ;\n"
+  "  c7 =   rho*(1.-alpf)*gamma/beta/dt                                           ;\n"
+  "  c8 =   rho*(1.-gamma*(1-alpf)/beta)                                          ;\n"
+  "  c9 =   rho*(1.-alpf)*dt*(1.-gamma/(2.*beta))                                 ;\n"
   "                                                                                \n";
 
  if(TimeDiscretization=="newmark_beta")
   writeIt
-  "  c[0] =   rho/(beta*dt*dt)                                                    ;\n"
-  "  c[1] =   lambda                                                              ;\n"
-  "  c[2] =   2.*mu                                                               ;\n"
-  "  c[3] =   rho/(beta*dt)                                                       ;\n"
-  "  c[4] =   rho*(1./2./beta -1.)                                                ;\n"
-  "  c[5] =   0.                                                                  ;\n"
-  "  c[6] =   0.                                                                  ;\n"
-  "  c[7] =   rho*gamma/beta/dt                                                   ;\n"
-  "  c[8] =   rho*(1.-gamma/beta)                                                 ;\n"
-  "  c[9] =   rho*dt*(1.-gamma/(2.*beta))                                         ;\n"
+  "  c0 =   rho/(beta*dt*dt)                                                      ;\n"
+  "  c1 =   lambda                                                                ;\n"
+  "  c2 =   2.*mu                                                                 ;\n"
+  "  c3 =   rho/(beta*dt)                                                         ;\n"
+  "  c4 =   rho*(1./2./beta -1.)                                                  ;\n"
+  "  c5 =   0.                                                                    ;\n"
+  "  c6 =   0.                                                                    ;\n"
+  "  c7 =   rho*gamma/beta/dt                                                     ;\n"
+  "  c8 =   rho*(1.-gamma/beta)                                                   ;\n"
+  "  c9 =   rho*dt*(1.-gamma/(2.*beta))                                           ;\n"
   "                                                                                \n";
 
  if(TimeDiscretization=="central_difference")
   writeIt
-  "  c[0] =   rho/(dt*dt)                                                         ;\n"
-  "  c[1] =   lambda                                                              ;\n"
-  "  c[2] =   2.*mu                                                               ;\n"
-  "  c[3] =   rho/(dt)                                                            ;\n"
-  "  c[4] =   rho*(1./2. -1.)                                                     ;\n"
-  "  c[5] =   0.                                                                  ;\n"
-  "  c[6] =   0.                                                                  ;\n"
-  "  c[7] =   rho*gamma/dt                                                        ;\n"
-  "  c[8] =   rho*(1.-gamma)                                                      ;\n"
-  "  c[9] =   rho*dt*(1.-gamma/2.)                                                ;\n"
+  "  c0 =   rho/(dt*dt)                                                           ;\n"
+  "  c1 =   lambda                                                                ;\n"
+  "  c2 =   2.*mu                                                                 ;\n"
+  "  c3 =   rho/(dt)                                                              ;\n"
+  "  c4 =   rho*(1./2. -1.)                                                       ;\n"
+  "  c5 =   0.                                                                    ;\n"
+  "  c6 =   0.                                                                    ;\n"
+  "  c7 =   rho*gamma/dt                                                          ;\n"
+  "  c8 =   rho*(1.-gamma)                                                        ;\n"
+  "  c9 =   rho*dt*(1.-gamma/2.)                                                  ;\n"
   "                                                                                \n";
 
  if(TimeDiscretization=="hht_alpha")
   writeIt
-  "  c[0] =   rho/(beta*dt*dt)                                                    ;\n"
-  "  c[1] =   lambda*(1.-alpf)                                                    ;\n"
-  "  c[2] =   2.*mu*(1.-alpf)                                                     ;\n"
-  "  c[3] =   rho/(beta*dt)                                                       ;\n"
-  "  c[4] =   rho*(1./2./beta -1.)                                                ;\n"
-  "  c[5] =   lambda*alpf                                                         ;\n"
-  "  c[6] =   2*mu*alpf                                                           ;\n"
-  "  c[7] =   rho*(1.-alpf)*gamma/beta/dt                                         ;\n"
-  "  c[8] =   rho*(1.-gamma*(1-alpf)/beta)                                        ;\n"
-  "  c[9] =   rho*(1.-alpf)*dt*(1.-gamma/(2.*beta))                               ;\n"
+  "  c0 =   rho/(beta*dt*dt)                                                      ;\n"
+  "  c1 =   lambda*(1.-alpf)                                                      ;\n"
+  "  c2 =   2.*mu*(1.-alpf)                                                       ;\n"
+  "  c3 =   rho/(beta*dt)                                                         ;\n"
+  "  c4 =   rho*(1./2./beta -1.)                                                  ;\n"
+  "  c5 =   lambda*alpf                                                           ;\n"
+  "  c6 =   2*mu*alpf                                                             ;\n"
+  "  c7 =   rho*(1.-alpf)*gamma/beta/dt                                           ;\n"
+  "  c8 =   rho*(1.-gamma*(1-alpf)/beta)                                          ;\n"
+  "  c9 =   rho*(1.-alpf)*dt*(1.-gamma/(2.*beta))                                 ;\n"
   "                                                                                \n";
+}
+
+if(multimaterial>1){
+ writeIt
+ "                                                                                \n"
+ "//==============================================================================\n"
+ "// ------- Region-dependent variational-formulation constants -------           \n"
+ "//==============================================================================\n"
+ "                                                                                \n";
+
+ if(TimeDiscretization=="generalized_alpha")
+  writeIt
+  "  macro c0 1.*((rho)*(1.-alpm)/(beta*dt*dt)) //                                \n"
+  "  macro c1 1.*((lambda)*(1.-alpf)) //                                          \n"
+  "  macro c2 1.*(2.*(mu)*(1.-alpf)) //                                           \n"
+  "  macro c3 1.*((rho)*(1.-alpm)/(beta*dt)) //                                   \n"
+  "  macro c4 1.*((rho)*((1.-alpm)/2./beta -1.)) //                               \n"
+  "  macro c5 1.*((lambda)*alpf) //                                               \n"
+  "  macro c6 1.*(2.*(mu)*alpf) //                                                \n"
+  "  macro c7 1.*((rho)*(1.-alpf)*gamma/beta/dt) //                               \n"
+  "  macro c8 1.*((rho)*(1.-gamma*(1.-alpf)/beta)) //                             \n"
+  "  macro c9 1.*((rho)*(1.-alpf)*dt*(1.-gamma/(2.*beta))) //                     \n";
+
+ if(TimeDiscretization=="newmark_beta")
+  writeIt
+  "  macro c0 1.*((rho)/(beta*dt*dt)) //                                          \n"
+  "  macro c1 1.*(lambda) //                                                      \n"
+  "  macro c2 1.*(2.*(mu)) //                                                     \n"
+  "  macro c3 1.*((rho)/(beta*dt)) //                                             \n"
+  "  macro c4 1.*((rho)*(1./2./beta -1.)) //                                      \n"
+  "  macro c5 1.*(0.) //                                                          \n"
+  "  macro c6 1.*(0.) //                                                          \n"
+  "  macro c7 1.*((rho)*gamma/beta/dt) //                                         \n"
+  "  macro c8 1.*((rho)*(1.-gamma/beta)) //                                       \n"
+  "  macro c9 1.*((rho)*dt*(1.-gamma/(2.*beta))) //                               \n";
+
+ if(TimeDiscretization=="central_difference")
+  writeIt
+  "  macro c0 1.*((rho)/(dt*dt)) //                                               \n"
+  "  macro c1 1.*(lambda) //                                                      \n"
+  "  macro c2 1.*(2.*(mu)) //                                                     \n"
+  "  macro c3 1.*((rho)/dt) //                                                    \n"
+  "  macro c4 1.*((rho)*(1./2. -1.)) //                                           \n"
+  "  macro c5 1.*(0.) //                                                          \n"
+  "  macro c6 1.*(0.) //                                                          \n"
+  "  macro c7 1.*((rho)*gamma/dt) //                                              \n"
+  "  macro c8 1.*((rho)*(1.-gamma)) //                                            \n"
+  "  macro c9 1.*((rho)*dt*(1.-gamma/2.)) //                                      \n";
+
+ if(TimeDiscretization=="hht_alpha")
+  writeIt
+  "  macro c0 1.*((rho)/(beta*dt*dt)) //                                          \n"
+  "  macro c1 1.*((lambda)*(1.-alpf)) //                                          \n"
+  "  macro c2 1.*(2.*(mu)*(1.-alpf)) //                                           \n"
+  "  macro c3 1.*((rho)/(beta*dt)) //                                             \n"
+  "  macro c4 1.*((rho)*(1./2./beta -1.)) //                                      \n"
+  "  macro c5 1.*((lambda)*alpf) //                                               \n"
+  "  macro c6 1.*(2.*(mu)*alpf) //                                                \n"
+  "  macro c7 1.*((rho)*(1.-alpf)*gamma/beta/dt) //                               \n"
+  "  macro c8 1.*((rho)*(1.-gamma*(1.-alpf)/beta)) //                             \n"
+  "  macro c9 1.*((rho)*(1.-alpf)*dt*(1.-gamma/(2.*beta))) //                     \n";
+
+ writeIt
+ "                                                                                \n";
+}
 
  if(ParaViewPostProcess){
   writeIt
