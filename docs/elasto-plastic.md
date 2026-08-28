@@ -947,3 +947,531 @@ The constitutive return and strip-footing parameters follow:
 * the accompanying [`plasticity_DP_2D/constitutive_problem.m_implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
 * the [COMET-FEniCSx quadrature-state pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html) for nonlinear plasticity assembly.
 
+---
+
+## Tutorial 4
+
+### Drucker–Prager elasto-plasticity with MFront
+
+#### Associated perfect plasticity for the strip-footing benchmark
+
+> 💡 **Prerequisite**: PSD must be built with MFront and MGIS support. The
+> installation procedure is described in the MFront/MGIS part of the
+> [PSD installation documentation](install.md).
+
+> 💡 **Relation to Tutorial 3**: This tutorial solves the same plane-strain,
+> displacement-controlled strip-footing problem as Tutorial 3. The mesh,
+> material parameters, finite-element approximation, quadrature rule and global
+> Newton problem are unchanged. Only the constitutive update is moved from
+> native PSD expressions to the `DruckerPrager` MFront behaviour.
+
+> ⚠️ **Model scope**: The PSD behaviour named `DruckerPrager` is an uncapped,
+> associated, perfectly plastic cone with an explicit apex return. It is not the
+> `DruckerPragerCap` behaviour from MFrontGallery, which adds an elliptical
+> compression cap and additional parameters.
+
+### Introduction
+
+The domain is the right half of a strip-footing problem,
+
+$$
+\Omega=[0,10]\times[0,10],
+$$
+
+with represented footing half-width $B=1$. Loading is imposed through a downward vertical displacement on the top segment $0\le x\le B$. No external traction is required.
+
+The tutorial uses `data/meshes/2D/Geo-Files/Gmsh/strip_footing_geomechanics.msh`. Its physical labels are:
+
+| Label | Boundary or region | Condition |
+|:---:|---|---|
+| 1 | bottom | $u_y=0$ |
+| 2 | right side | $u_x=0$ |
+| 3 | footing | $u_y=-\bar u$ |
+| 4 | free top | zero traction |
+| 5 | left symmetry | $u_x=0$ |
+| 6 | surface | material domain |
+
+The final settlement is $\bar u_{\max}=0.03$ and is reached in 12 equal
+increments.
+
+### Constitutive theory
+
+#### Kinematics and plane-strain elasticity
+
+The infinitesimal strain is additively decomposed as
+
+$$
+\boldsymbol\varepsilon
+=\boldsymbol\varepsilon^e+\boldsymbol\varepsilon^p.
+$$
+
+The elastic law is
+
+$$
+\boldsymbol\sigma
+=2\mu\,\operatorname{dev}(\boldsymbol\varepsilon^e)
+ +K\operatorname{tr}(\boldsymbol\varepsilon^e)\boldsymbol I,
+$$
+
+where
+
+$$
+\mu=\frac{E}{2(1+\nu)},
+\qquad
+K=\frac{E}{3(1-2\nu)},
+\qquad
+\lambda=\frac{E\nu}{(1+\nu)(1-2\nu)}.
+$$
+
+The displacement field is two-dimensional, but the constitutive calculation is plane strain. Therefore $\varepsilon_{zz}=0$, while $\sigma_{zz}$ and $\varepsilon^p_{zz}$ are retained by MFront. Symmetric tensors use the Kelvin/Mandel ordering
+
+$$
+[xx,yy,zz,\sqrt2xy].
+$$
+
+This convention makes a tensor scalar product equal to the ordinary dot product of its stored components.
+
+#### Yield function and associated flow
+
+With tension-positive stresses, the PSD model uses
+
+$$
+f(\boldsymbol\sigma)
+=\sqrt{J_2}+\eta p-c\le0,
+$$
+
+with
+
+$$
+p=\frac{\operatorname{tr}(\boldsymbol\sigma)}{3},
+\qquad
+\sqrt{J_2}
+=\frac{\|\operatorname{dev}(\boldsymbol\sigma)\|}{\sqrt2}.
+$$
+
+The physical friction angle $\phi$ and cohesion $c_0$ are mapped to the cone parameters by
+
+$$
+\eta=\frac{3\tan\phi}{\sqrt{9+12\tan^2\phi}},
+\qquad
+c=\frac{3c_0}{\sqrt{9+12\tan^2\phi}}.
+$$
+
+The flow rule is associated:
+
+$$
+\dot{\boldsymbol\varepsilon}^p
+=\dot\lambda\frac{\partial f}{\partial\boldsymbol\sigma},
+\qquad
+\dot\lambda\ge0.
+$$
+
+There is no hardening variable. The complete material history is represented by the plastic-strain tensor $\boldsymbol\varepsilon^p$ at each integration point.
+
+#### Elastic, smooth-cone and apex branches
+
+For total strain $\boldsymbol\varepsilon_{n+1}$ and the plastic strain from the
+last converged load step, MFront forms
+
+$$
+\boldsymbol\varepsilon^{e,\mathrm{tr}}
+=\boldsymbol\varepsilon_{n+1}-\boldsymbol\varepsilon^p_n,
+$$
+
+$$
+p^{\mathrm{tr}}
+=K\operatorname{tr}(\boldsymbol\varepsilon^{e,\mathrm{tr}}),
+\qquad
+\rho^{\mathrm{tr}}
+=2\mu\|\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})\|.
+$$
+
+The two branch criteria are
+
+$$
+C_1=\frac{\rho^{\mathrm{tr}}}{\sqrt2}
+    +\eta p^{\mathrm{tr}}-c,
+$$
+
+$$
+C_2=\eta p^{\mathrm{tr}}
+    -K\eta^2\frac{\rho^{\mathrm{tr}}}{\mu\sqrt2}-c.
+$$
+
+| Conditions | Constitutive response |
+|---|---|
+| $C_1\le0$ | elastic |
+| $C_1>0$ and $C_2\le0$ | return to the smooth cone |
+| $C_1>0$ and $C_2>0$ | return to the cone apex |
+
+On the smooth cone,
+
+$$
+\Delta\lambda_s=\frac{C_1}{\mu+K\eta^2},
+\qquad
+\widehat{\boldsymbol N}
+=\frac{\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})}
+       {\|\operatorname{dev}(\boldsymbol\varepsilon^{e,\mathrm{tr}})\|},
+$$
+
+$$
+\widehat{\boldsymbol M}
+=\sqrt2\mu\widehat{\boldsymbol N}+K\eta\boldsymbol I,
+$$
+
+$$
+\boldsymbol\sigma_{n+1}
+=\boldsymbol\sigma^{\mathrm{tr}}
+-\Delta\lambda_s\widehat{\boldsymbol M},
+$$
+
+$$
+\boldsymbol\varepsilon^p_{n+1}
+=\boldsymbol\varepsilon^p_n
++\Delta\lambda_s
+ \left(\frac{\widehat{\boldsymbol N}}{\sqrt2}
+       +\frac{\eta}{3}\boldsymbol I\right).
+$$
+
+At the apex,
+
+$$
+\boldsymbol\sigma_{n+1}=\frac{c}{\eta}\boldsymbol I,
+\qquad
+\boldsymbol\varepsilon^p_{n+1}
+=\boldsymbol\varepsilon_{n+1}
+-\frac{c}{3K\eta}\boldsymbol I.
+$$
+
+MFront also returns the elastic or consistent algorithmic tangent needed by the global Newton method. The smooth-cone tangent is
+
+$$
+\mathbb C^{\mathrm{alg}}
+=\mathbb C^e
+-\frac{2\sqrt2\mu^2\Delta\lambda_s}{\rho^{\mathrm{tr}}}
+ \left(\mathbb P_{\mathrm{dev}}
+       -\widehat{\boldsymbol N}\otimes\widehat{\boldsymbol N}\right)
+-\frac{\widehat{\boldsymbol M}\otimes\widehat{\boldsymbol M}}
+       {\mu+K\eta^2}.
+$$
+
+It is elastic on the elastic branch and zero on the apex branch.
+
+### The MFront behaviour
+
+The behaviour is implemented in `src/plugins/mfront/law/DruckerPrager.mfront`. The four physical inputs are declared as material properties so PSD can provide them at run time:
+
+<pre><code>@DSL DefaultDSL;
+@Behaviour DruckerPrager;
+
+@MaterialProperty stress young;
+young.setGlossaryName("YoungModulus");
+
+@MaterialProperty real nu;
+nu.setGlossaryName("PoissonRatio");
+
+@MaterialProperty stress cohesion;
+cohesion.setEntryName("Cohesion");
+
+@MaterialProperty real frictionAngle;
+frictionAngle.setEntryName("FrictionAngle");
+
+// Plane strain gives four stored components: xx, yy, zz, sqrt(2)xy.
+@StateVariable StrainStensor ep;
+ep.setGlossaryName("PlasticStrain");
+</code></pre>
+
+The prediction operator exposes the elastic stiffness whenever MFront requests an elastic prediction:
+
+<pre><code>@PredictionOperator{
+  static_cast&lt;void&gt;(smt);
+  const auto lambda = computeLambda(young,nu);
+  const auto mu = computeMu(young,nu);
+  Dt = lambda*Stensor4::IxI()+2*mu*Stensor4::Id();
+}
+</code></pre>
+
+At each quadrature point the integrator reconstructs the total strain, computes the trial state and classifies the return branch:
+
+<pre><code>@ProvidesSymmetricTangentOperator;
+@Integrator{
+  const auto lambda = computeLambda(young,nu);
+  const auto mu = computeMu(young,nu);
+  const auto bulk = young/(3*(1-2*nu));
+  const auto tangentFriction = tan(frictionAngle);
+  const auto coneScale = sqrt(9+12*tangentFriction*tangentFriction);
+  const auto eta = 3*tangentFriction/coneScale;
+  const auto c = 3*cohesion/coneScale;
+  const auto sqrt2 = sqrt(real{2});
+
+  // PSD supplies total strain at s1 and zero strain at s0.
+  const auto totalStrain = eval(eto+deto);
+  const auto elasticTrial = eval(totalStrain-ep);
+  const auto devElastic = deviator(elasticTrial);
+  const auto normElastic =
+    sqrt(max(strain{0},elasticTrial|devElastic));
+  const auto rhoTrial = 2*mu*normElastic;
+  const auto pressureTrial = bulk*trace(elasticTrial);
+  const auto trialStress = eval(
+    2*mu*devElastic+pressureTrial*StressStensor::Id());
+
+  const auto denominatorApex = bulk*eta*eta;
+  const auto denominatorSmooth = mu+denominatorApex;
+  const auto criterion1 = rhoTrial/sqrt2+eta*pressureTrial-c;
+  const auto criterion2 = eta*pressureTrial
+    -denominatorApex*rhoTrial/(mu*sqrt2)-c;
+
+  // The elastic, smooth and apex updates follow here.
+}
+</code></pre>
+
+The three branches and tangent updates are coded explicitly:
+
+<pre><code>if(criterion1&lt;=stress{0}){
+  // Elastic point.
+  sig = trialStress;
+  if(computeTangentOperator_){
+    Dt = lambda*Stensor4::IxI()+2*mu*Stensor4::Id();
+  }
+} else if(criterion2&lt;=stress{0}){
+  // Smooth return to the cone.
+  const auto dl = criterion1/denominatorSmooth;
+  const auto normal =
+    eval(devElastic/max(normElastic,strain{1.e-30}));
+  const auto correction = eval(
+    sqrt2*mu*normal+bulk*eta*StressStensor::Id());
+
+  sig = trialStress-dl*correction;
+  dep = dl*(normal/sqrt2+(eta/3)*StrainStensor::Id());
+
+  if(computeTangentOperator_){
+    const auto curvature = 2*sqrt2*mu*mu*dl
+      /max(rhoTrial,stress{1.e-30});
+    Dt = lambda*Stensor4::IxI()+2*mu*Stensor4::Id()
+      -curvature*(Stensor4::K()-(normal^normal))
+      -(correction^correction)/denominatorSmooth;
+  }
+} else {
+  // Hydrostatic return to the cone apex.
+  sig = (c/eta)*StressStensor::Id();
+  dep = totalStrain
+    -(c/(3*bulk*eta))*StrainStensor::Id()-ep;
+  if(computeTangentOperator_){
+    Dt = stress{0}*Stensor4::Id();
+  }
+}
+</code></pre>
+
+
+### PSD–MFront coupling
+
+The displacement is approximated with continuous P2 elements. Stress, strain, plastic strain and tangent components are stored at the seven `FEQF5` integration points of every triangle. This is essential: the MFront bridge must perform seven independent constitutive updates rather than broadcasting one cell value.
+
+The generated finite-element spaces include
+
+<pre><code>// P2 displacement selected by -lagrange 2.
+fespace Vh(Th,Pk);
+
+// Six independent entries of the symmetric in-plane tangent.
+fespace Qh(Th,[QFElastoPlastic,QFElastoPlastic,QFElastoPlastic,
+               QFElastoPlastic,QFElastoPlastic,QFElastoPlastic]);
+
+// In-plane strain and stress: xx, yy, sqrt(2)xy.
+fespace Sh(Th,[QFElastoPlastic,QFElastoPlastic,QFElastoPlastic]);
+
+// MFront plane-strain plastic state: xx, yy, zz, sqrt(2)xy.
+fespace Ih(Th,[QFElastoPlastic,QFElastoPlastic,
+               QFElastoPlastic,QFElastoPlastic]);
+</code></pre>
+
+`FemParameters.edp` asks MFront for the initial material tangent with an explicit
+quadrature-point count:
+
+<pre><code>PsdMfrontHandler(
+  MaterialBehaviour,
+  mfrontBehaviourHypothesis      = MaterialHypothesis,
+  mfrontPropertyNames            = PropertyNames,
+  mfrontPropertyValues           = PropertyValues,
+  mfrontMaterialTensor           = Mt11[],
+  mfrontQuadraturePointsPerCell  = 7
+);
+</code></pre>
+
+During every global Newton iteration, PSD passes the current total strain and
+receives the updated stress, candidate plastic strain and consistent tangent:
+
+<pre><code>// Total strain at the current global Newton iterate.
+[Eps11,Eps22,Eps12] =
+  [dx(u)+dx(Du),dy(u1)+dy(Du1),
+   (dy(u)+dy(Du)+dx(u1)+dx(Du1))/SQ2];
+
+// Restore the history from the last converged load step. A failed Newton
+// iterate must never become the starting state of the next local update.
+[Isv1,Isv2,Isv3,Isv4] =
+  [IsvOld1,IsvOld2,IsvOld3,IsvOld4];
+
+PsdMfrontHandler(
+  MaterialBehaviour,
+  mfrontBehaviourHypothesis      = MaterialHypothesis,
+  mfrontPropertyNames            = PropertyNames,
+  mfrontPropertyValues           = PropertyValues,
+  mfrontMaterialTensor           = Mt11[],
+  mfrontStrainTensor             = Eps11[],
+  mfrontStressTensor             = Sig11[],
+  mfrontStateVariable            = Isv1[],
+  mfrontQuadraturePointsPerCell  = 7
+);
+</code></pre>
+
+Only a converged candidate is committed:
+
+<pre><code>// Commit after global equilibrium has converged.
+u[] += Du[];
+[IsvOld1,IsvOld2,IsvOld3,IsvOld4] =
+  [Isv1,Isv2,Isv3,Isv4];
+</code></pre>
+
+The complete generated algorithm is summarised by its source comments:
+
+<pre><code>//==============================================================================
+//  ------- MFront Drucker-Prager algorithm -------
+//------------------------------------------------------------------------------
+//  Loop 1 : TlMaxItr;             # prescribed-settlement loop
+//    update_settlement();
+//    initialize_increment();      # Du = 0
+//    restore_converged_state();   # MFront plastic strain
+//    assemble_linear_system();
+//    Loop 2 : NrMaxItr;           # Newton loop
+//      solve_linear_system();
+//      update_increment();        # Du += du
+//      compute_total_strain();
+//      restore_mfront_state();     # discard previous trial history
+//      mfront_update();            # stress, state, consistent tangent
+//      assemble_linear_system();
+//      exit_if_converged();
+//    commit_displacement_and_mfront_state();
+//    calculate_footing_reaction();
+//==============================================================================
+</code></pre>
+
+### Procedure to simulate in PSD
+
+### Step 1: Preprocessing
+
+Create a clean problem directory and generate the MFront-backed case:
+
+<pre><code>
+PSD_PreProcess -problem elasto_plastic -model drucker_prager -dimension 2 \
+  -dirichletconditions 4 -lagrange 2 -postprocess u -useMfront
+</code></pre>
+
+The relevant options are:
+
+* `-problem elasto_plastic`: select incremental elasto-plastic equilibrium;
+* `-model drucker_prager`: select the Drucker–Prager model;
+* `-dimension 2`: use the supported plane-strain formulation;
+* `-dirichletconditions 4`: generate the four strip-footing constraints;
+* `-lagrange 2`: use P2 displacement interpolation;
+* `-postprocess u`: write displacement output for ParaView;
+* `-useMfront`: perform the constitutive update through MFront/MGIS.
+
+Do not add `-tractionconditions`: the footing is driven by prescribed
+settlement.
+
+The generated `ControlParameters.edp` contains the benchmark inputs and MFront
+configuration:
+
+<pre><code>real E             = 1.e7,
+     nu            = 0.48,
+     cohesion      = 450.,
+     frictionAngle = 20.*pi/180.;
+
+real footingWidth = 1.,
+     maxSettlement = 0.03;
+
+string MaterialBehaviour  = "DruckerPrager";
+string MaterialHypothesis = "PLANESTRAIN";
+string PropertyNames =
+  "YoungModulus PoissonRatio Cohesion FrictionAngle";
+real[int] PropertyValues = [E,nu,cohesion,frictionAngle];
+
+macro EpsNrCon  () 1.e-8
+macro NrMaxItr  () 200
+macro TlMaxItr  () 12
+macro QFElastoPlastic FEQF5
+</code></pre>
+
+The boundary conditions are generated as
+
+<pre><code>// Bottom: vertical restraint.
+macro Dbc0On 1
+macro Dbc0Uy 0.
+
+// Right side: horizontal restraint.
+macro Dbc1On 2
+macro Dbc1Ux 0.
+
+// Left symmetry boundary: horizontal restraint.
+macro Dbc2On 5
+macro Dbc2Ux 0.
+
+// Footing: prescribed downward settlement.
+macro Dbc3On 3
+macro Dbc3Uy -tl*maxSettlement
+</code></pre>
+
+### Step 2: Solving
+
+Run the generated problem with the Gmsh strip-footing mesh:
+
+<pre><code>
+PSD_Solve -np 1 Main.edp -mesh data/meshes/2D/Geo-Files/Gmsh/strip_footing_geomechanics.msh -v 0 -ns -nw
+</code></pre>
+
+Adjust the mesh path relative to the directory in which `PSD_Solve` is run. The case also supports multiple MPI processes, for example `-np 4`.
+
+For each converged increment PSD prints
+
+<pre><code>TimeStep  Settlement  Pressure  NRiterations  RelResidual</code></pre>
+
+where `Pressure` is the vertical footing reaction normalised by $B c_0$. The reaction is evaluated through internal virtual work.
+
+To retain the output for a later pressure-settlement plot, run
+
+<pre><code>
+PSD_Solve -np 1 Main.edp -mesh data/meshes/2D/Geo-Files/Gmsh/strip_footing_geomechanics.msh -v 0 -ns -nw | tee drucker_prager_mfront.log
+</code></pre>
+
+The two plotting columns can then be extracted with
+
+<pre><code>
+awk '$1 ~ /^[0-9]+$/ &amp;&amp; NF == 5 {print $2,$3}' \
+  drucker_prager_mfront.log &gt; pressure_settlement_mfront.dat
+</code></pre>
+
+### Step 3: Postprocessing in ParaView
+
+With `-postprocess u`, PSD writes a `Solution.pvd` time series and one VTU file per settlement increment. Open `Solution.pvd` in ParaView and select `U` as the active vector field.
+
+A typical displacement visualisation as in tutorial 3 and same results are obtained here as well.
+
+### Step 4: Validation curve
+
+Plot settlement from column 1 of `pressure_settlement_mfront.dat` against the normalised footing pressure from column 2. The MFront curve should be compared with the pressure–settlement curves from PSD (tutorial 3), PSD-Mfront (this tutorial)  and DOLFINx are visually and numerically coincident:
+
+<figure style="text-align: center;">
+  <img src="_images/elasto-plastic/comp-dp-mfront.png" width="45%" alt="Validation of displacement movement of inner border">
+  <figcaption style="max-width: 600px; margin: 0 auto; font-style: italic;">
+    Figure: Normalized footing pressure from native PSD and the independent DOLFINx implementation.
+  </figcaption>
+</figure>
+
+
+### References
+
+The theory and benchmark are the same as in Tutorial 3. See the references listed there for the strip-footing formulation and the independent implementation used for validation.For comparison with a different capped material model, see the MFront authors'
+
+* T. Helfer, MFrontGallery, [`DruckerPragerCap.mfront`](https://github.com/thelfer/MFrontGallery/blob/master/generic-behaviours/plasticity/DruckerPragerCap.mfront).
+* M. Čermák, S. Sysala, and J. Valdman, [*Efficient and flexible MATLAB implementation of 2D and 3D elastoplastic problems*](https://arxiv.org/abs/1805.04155), Applied Mathematics and Computation 355 (2019), 595–614;
+* the accompanying [`plasticity_DP_2D/constitutive_problem.m_implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
+* the [COMET-FEniCSx quadrature-state pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html) for nonlinear plasticity assembly.
