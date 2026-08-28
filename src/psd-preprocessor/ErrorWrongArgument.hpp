@@ -91,6 +91,23 @@
       }
     }
 
+    if( argvdummy == "-multimaterial")
+    {
+      argvalue = argv[i+1];
+      if (argvalue.find(".") != string::npos){
+      cout <<
+          "===================================================================\n"
+          " ** ERROR **\n"
+          "===================================================================\n"
+          "\n"
+          "The flag \033[1;31m-multimaterial\033[0m only accepts \033[1;34mInteger\033[0m values\n"
+          "  \033[1;31m-multimaterial "<< argvalue << "\033[0m is not acceptable, please correct \n"
+          "\n"
+          "===================================================================\n";
+      errorArgument = true;
+      }
+    }
+
     if( argvdummy == "-dirichletconditions"     )
     {
       argvalue = argv[i+1];
@@ -204,6 +221,33 @@
           "\n"
           "The flag \033[1;31m-dimension\033[0m only accepts \033[1;34m2|3\033[0m\n"
           "  \033[1;31m-dimension "<< spc << "\033[0m is not acceptable, please correct \n"
+          "\n"
+          "===================================================================\n";
+      errorArgument = true;
+     }
+
+  if (multimaterial < 1){
+      cout <<
+          "===================================================================\n"
+          " ** ERROR **\n"
+          "===================================================================\n"
+          "\n"
+          "The flag \033[1;31m-multimaterial\033[0m only accepts integers greater than or equal to 1.\n"
+          "  \033[1;31m-multimaterial "<< multimaterial << "\033[0m is not acceptable, please correct \n"
+          "\n"
+          "===================================================================\n";
+      errorArgument = true;
+     }
+
+  if (multimaterial > 1 && Prblm != "soildynamics"){
+      cout <<
+          "===================================================================\n"
+          " ** ERROR **\n"
+          "===================================================================\n"
+          "\n"
+          "The flag \033[1;31m-multimaterial\033[0m currently works only with "
+          "\033[1;34m-problem soildynamics\033[0m.\n"
+          "  \033[1;31m-problem "<< Prblm << "\033[0m is not acceptable, please correct \n"
           "\n"
           "===================================================================\n";
       errorArgument = true;
