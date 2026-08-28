@@ -10,4 +10,25 @@ Besides the parallel suite, PSD also includes a sequential solver which does not
 
 PSD works for two and three dimensional problems only. Unstructured meshes (triangular for 2D and tetrahedral for 3D) are supported in [MEDIT&#39;s](https://www.ljll.math.upmc.fr/frey/software.html)  `.mesh` format, [Gmsh&#39;s](http://gmsh.info/) `.msh` format, [SALOME&#39;s](https://www.salome-platform.org/) `.med` format. PSD post processing is done via `.pvd` ,`.vtk`, `pvtu`, and `.vtu` files of the [ParaView](https://www.paraview.org/) platform.
 
+## Citing PSD
+
+If you use PSD in your research, please cite the following paper:
+
+> Badri, M. A., Rastiello, G., & Foerster, E. (2026). PSD: Parallel Finite Element Solver for Continuum Dynamics. *Journal of Open Source Software, 11*(123), 9411. [https://doi.org/10.21105/joss.09411](https://doi.org/10.21105/joss.09411)
+
+```bibtex
+@article{Badri2026,
+  doi = {10.21105/joss.09411},
+  url = {https://doi.org/10.21105/joss.09411},
+  year = {2026},
+  publisher = {The Open Journal},
+  volume = {11},
+  number = {123},
+  pages = {9411},
+  author = {Badri, Mohd Afeef and Rastiello, Giuseppe and Foerster, Evelyne},
+  title = {PSD: Parallel Finite Element Solver for Continuum Dynamics},
+  journal = {Journal of Open Source Software}
+}
+```
+
 Here are some simulation examples performed with PSD.
