@@ -6,6 +6,7 @@ SOILDYNAMICS_TESTS = \
   test_par_3d.sh \
   test_par_2d_dc_disp.sh \
   test_par_2d_dc_force.sh \
+  test_par_3d_multimaterial.sh \
   test_par_3d_top2vol.sh \
   test_par_3d_top2vol_dc_force.sh \
   test_par_3d_top2vol_dc_disp.sh
@@ -114,6 +115,18 @@ test_par_2d_dc_force.sh:
 	@echo 'find . -name Main.edp -exec sed -i -e "s#../Plugins/DDmacro.edp#./../ff-files/DDmacro.edp#g" {} \;' >> $@
 	@echo 'find . -name ControlParameters.edp -exec sed -i -e "s#../Meshes/2D/#$(MESHDIR2)/#g" {} \;' >> $@
 	@echo './PSD_Solve -n $(NP) Main.edp -v 1 -ns -nw > PSD_Solve-2D_soildynamics_Parallel_doublecouple_force-based.log' >> $@
+	@chmod +x $@
+
+test_par_3d_multimaterial.sh:
+	@echo '#!/bin/bash' > $@
+	@echo 'set -e' >> $@
+	@echo './PSD_PreProcess -dimension 3 -problem soildynamics -timediscretization newmark_beta -multimaterial 2 -testflags > PSD_PreProcess-3D_soildynamics_Parallel_multimaterial.log' >> $@
+	@echo 'find . -name LinearFormBuilderAndSolver.edp -exec sed -i -e "s/t += dt;/break;/g" {} \;' >> $@
+	@echo 'find . -name Main.edp -exec sed -i -e "s#../Plugins/gofastplugins#./../plugins/go-fast-plugins/cpp/gofastplugins#g" {} \;' >> $@
+	@echo 'find . -name Main.edp -exec sed -i -e "s#../Plugins/DDmacro.edp#./../ff-files/DDmacro.edp#g" {} \;' >> $@
+	@echo 'find . -name ControlParameters.edp -exec sed -i -e "s#materialLabels = \[11, 22\]#materialLabels = [6, 22]#g" {} \;' >> $@
+	@echo 'find . -name ControlParameters.edp -exec sed -i -e "s#../Meshes/3D/#$(MESHDIR3)/#g" {} \;' >> $@
+	@echo './PSD_Solve -n $(NP) Main.edp -v 1 -ns -nw > PSD_Solve-3D_soildynamics_Parallel_multimaterial.log' >> $@
 	@chmod +x $@
 
 test_par_3d_top2vol.sh:

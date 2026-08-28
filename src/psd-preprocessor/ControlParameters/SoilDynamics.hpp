@@ -78,7 +78,78 @@ if(top2vol)
   "  macro PartZ() 1 //                                                         \n"
   "                                                                             \n";
 
- if(doublecouple=="displacement_based" || doublecouple=="force_based" || top2vol)
+ if(multimaterial>1){
+  writeIt
+  "                                                                              \n"
+  "//============================================================================\n"
+  "//              ------- Multi-material soil parameters -------               \n"
+  "// -------------------------------------------------------------------        \n"
+  "// materialLabels : volume-region labels associated with each material       \n"
+  "// materialRho    : density of each material                                  \n"
+  "// materialCp/Cs  : primary and secondary wave velocities                    \n"
+  "// -------------------------------------------------------------------        \n"
+  "// Edit every array entry so that it matches the regions and properties       \n"
+  "// of the input mesh. Unlisted volume regions receive zero coefficients.      \n"
+  "//============================================================================\n"
+  "                                                                              \n"
+  "  int numberOfMaterials = " << multimaterial << ";\n"
+  "                                                                              \n"
+  "  int[int] materialLabels = [";
+
+  for(int material=0; material<multimaterial; material++)
+    write << (material ? ", " : "") << 11*(material+1);
+
+  write << "];\n"
+        << "  real[int] materialRho   = [";
+
+  for(int material=0; material<multimaterial; material++)
+    write << (material ? ", " : "") << (material==1 ? "1500.0" : "1800.0");
+
+  write << "];\n"
+        << "  real[int] materialCs    = [";
+
+  for(int material=0; material<multimaterial; material++)
+    write << (material ? ", " : "") << (material==1 ? "12.0" : "17.0");
+
+  write << "];\n"
+        << "  real[int] materialCp    = [";
+
+  for(int material=0; material<multimaterial; material++)
+    write << (material ? ", " : "") << (material==1 ? "22.0" : "30.0");
+
+  write << "];\n"
+        << "                                                                              \n"
+        << "  real[int] materialMu(numberOfMaterials),\n"
+        << "            materialLambda(numberOfMaterials);\n"
+        << "                                                                              \n"
+        << "  for(int material=0; material<numberOfMaterials; material++){\n"
+        << "    materialMu[material] = materialRho[material]\n"
+        << "                         * materialCs[material]*materialCs[material];\n"
+        << "    materialLambda[material] = materialRho[material]\n"
+        << "      * materialCp[material]*materialCp[material] - 2.0*materialMu[material];\n"
+        << "  }\n"
+        << "                                                                              \n";
+
+  const string materialMacroNames[] = {"rho", "cs", "cp", "mu", "lambda"};
+  const string materialArrayNames[] = {"materialRho", "materialCs", "materialCp",
+                                       "materialMu", "materialLambda"};
+
+  for(int property=0; property<5; property++){
+    write << "  macro " << materialMacroNames[property] << " 1.*(";
+    for(int material=0; material<multimaterial; material++){
+      if(material)
+        write << "\n" << "             + ";
+      write << materialArrayNames[property] << "[" << material << "]"
+            << "*(region == materialLabels[" << material << "])";
+    }
+    write << ") //\n";
+  }
+
+  write << "                                                                              \n";
+ }
+
+ if(multimaterial==1 &&
+    (doublecouple=="displacement_based" || doublecouple=="force_based" || top2vol))
   writeIt
   "                                                                              \n"
   "//============================================================================\n"
@@ -96,7 +167,8 @@ if(top2vol)
   "  real    mu     =  cs*cs*rho,                                                \n"
   "          lambda =  cp*cp*rho - 2*mu;                                         \n"
   "                                                                              \n";
- else
+ if(multimaterial==1 &&
+    doublecouple!="displacement_based" && doublecouple!="force_based" && !top2vol)
   writeIt
   "                                                                              \n"
   "//============================================================================\n"
@@ -516,4 +588,3 @@ writeIt
 "//=============================================================================\n"
 "                 // TO DO                                                      \n"
 "                                                                               \n";
-

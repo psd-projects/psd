@@ -35,6 +35,7 @@
            argvdummy != "-tractionconditions"       &&
            argvdummy != "-adaptmesh_backend"        &&
            argvdummy != "-adaptmesh_metric_backend" &&
+           argvdummy != "-multimaterial"            &&
            argvdummy != "-dimension"                &&
            argvdummy != "-lagrange"                 &&
 	   argvdummy != "-adaptmesh_type"           &&

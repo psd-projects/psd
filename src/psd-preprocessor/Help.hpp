@@ -41,6 +41,9 @@
    -lagrange                 [int]     Lagrange order for building FE space.
                                        Option  1 for P1 or 2 for P2. Default 1.
 
+   -multimaterial            [int]     Number of material regions generated for
+                                       soil dynamics. Default 1 (single material).
+
 
   ----------------------------------------------------------------------------
            STRING type flags, these flags expect an string value

@@ -63,6 +63,7 @@ int main(int argc, char *argv[]){
   int dirichletconditions      = 1;
   int tractionconditions       = 0;
   int adaptmeshiteration       = 5;
+  int multimaterial            = 1;
   int spc                      = 2;
   int lag                      = 1;
 
@@ -129,6 +130,7 @@ int main(int argc, char *argv[]){
     if( argvdummy == "-bodyforceconditions"     ) bodyforceconditions      = stoi(argv[i+1]);
     if( argvdummy == "-tractionconditions"      ) tractionconditions       = stoi(argv[i+1]);
     if( argvdummy == "-adaptmesh_iter"          ) adaptmeshiteration       = stoi(argv[i+1]);
+    if( argvdummy == "-multimaterial"           ) multimaterial            = stoi(argv[i+1]);
     if( argvdummy == "-dimension"               ) spc                      = stoi(argv[i+1]);
     if( argvdummy == "-lagrange"                ) lag                      = stoi(argv[i+1]);
 
@@ -314,6 +316,7 @@ if(   PostProcess=="u"   || PostProcess=="v"   || PostProcess=="a"   || PostProc
   cout << " bodyforceconditions are ------------> "<<  bodyforceconditions      << endl;
   cout << " tractionconditions are -------------> "<<  tractionconditions       << endl;
   cout << " adaptmeshiterations are ------------> "<<  adaptmeshiteration       << endl;
+  cout << " number of materials is -------------> "<<  multimaterial            << endl;
   cout << " problem dimension is ---------------> "<<  spc                      << endl;
   cout << " lagrange order is ------------------> "<<  lag                      << endl;
 

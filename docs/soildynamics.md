@@ -918,6 +918,202 @@ Once the simulation is finished. PSD allows postprocessing of results in ParaVie
 </figure>
 
 
+## Tutorial 5
+### 3D multi-material soildynamics with a double-couple source
+_Wave propagation across multi-material erthquake mesh using a Ricker source-time function_
+
+This tutorial considers a three-dimensional domain composed of two conforming soil volumes. Each volume has its own density and wave velocities and is identified by a physical volume label in the mesh. A double-couple source is placed inside the domain, while a paraxial condition absorbs outgoing waves on the exterior boundary.
+
+The example uses the mesh `french_alps_two_volumes.msh` with the following material definition:
+
+| Volume label | Density $\rho$ | Shear-wave velocity $c_s$ | Pressure-wave velocity $c_p$ |
+| ------------ | -------------- | -------------------------- | ----------------------------- |
+| 11           | 1800.0         | 17.0                       | 30.0                          |
+| 22           | 1500.0         | 12.0                       | 22.0                          |
+
+Use one consistent system of units for the mesh coordinates, material properties, source parameters, and time step.
+
+<figure style="text-align: center;">
+  <!-- First row -->
+  <img src="https://github.com/user-attachments/assets/2521cad4-9101-4921-a258-b41d20ef7ad4" width="45%" alt="Mesh" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/357db0db-2faf-47f6-9212-c66a4693138d" width="45%" alt="Regions" style="margin-right:1%;">
+  <br>
+  <figcaption><em>Figure: Mesh of use and the two regions.</em></figcaption>
+</figure>
+
+For each material $m$, PSD computes the Lamé parameters as
+$$
+\mu_m = \rho_m c_{s,m}^2,
+\qquad
+\lambda_m = \rho_m c_{p,m}^2 - 2\mu_m.
+$$
+
+The generated coefficients are selected from the element's volume label during integration. Because both materials share the same displacement finite-element space on a conforming mesh, displacement continuity and traction equilibrium are represented naturally at the material interface.
+
+The quantities exported in this tutorial are displacement $\mathbf{u}$, velocity $\mathbf{v}$, and acceleration $\mathbf{a}$.
+
+#### 🛠️ Step 1: Preparing the mesh
+
+Copy `french_alps_two_volumes.msh` to the simulation directory. The mesh must contain:
+
+- physical volume label `11` for the first material;
+- physical volume label `22` for the second material;
+- surface label `1` on the boundary where the paraxial condition is applied;
+- mesh vertices at the four double-couple source coordinates used below.
+
+> 🚨 **Important:** Every volume label in the mesh must occur exactly once in `materialLabels`. A volume whose label is absent from that array receives zero material and variational coefficients.
+
+#### 🛠️ Step 2: Generating the solver
+
+From the simulation directory, generate a parallel three-dimensional solver:
+
+```bash
+PSD_PreProcess -dimension 3 -problem soildynamics \
+  -timediscretization newmark_beta \
+  -multimaterial 2 \
+  -doublecouple displacement_based \
+  -postprocess uva \
+  -useGFP
+```
+
+The new option in this tutorial is `-multimaterial 2`. Its integer value tells the processor how many material entries and region-dependent expressions to generate. The other relevant options are:
+
+| Flag | Purpose |
+| ---- | ------- |
+| `-dimension 3` | Generates a three-dimensional finite-element formulation. |
+| `-problem soildynamics` | Selects the soil-dynamics physics. |
+| `-timediscretization newmark_beta` | Selects Newmark-$\beta$ time integration. |
+| `-multimaterial 2` | Generates material data for two volume regions. |
+| `-doublecouple displacement_based` | Activates the four-point double-couple source. |
+| `-postprocess uva` | Exports displacement, velocity, and acceleration. |
+| `-useGFP` | Uses the optional GoFast plugin for supported operations. |
+
+> 💡 **Note:** To change the number of materials, rerun `PSD_PreProcess` with the new `-multimaterial` value. Do not change only `numberOfMaterials` in an already generated file because the region-dependent expressions are generated for the original number of entries.
+
+#### ⚙️ Step 3: Configuring `ControlParameters.edp`
+
+After preprocessing, open `ControlParameters.edp` and set the mesh name:
+
+```cpp
+string ThName = "french_alps_two_volumes.msh";
+```
+
+The mesh can alternatively be selected when launching the solver with `-mesh french_alps_two_volumes.msh`.
+
+Next, verify the generated material arrays:
+
+```cpp
+int numberOfMaterials = 2;
+
+int[int]  materialLabels = [11, 22];
+real[int] materialRho    = [1800.0, 1500.0];
+real[int] materialCs     = [17.0, 12.0];
+real[int] materialCp     = [30.0, 22.0];
+```
+
+Entries at the same array index describe one material. Thus, index `0` associates volume label `11` with $(\rho,c_s,c_p)=(1800,17,30)$, while index `1` associates label `22` with $(1500,12,22)$. PSD then calculates `materialMu` and `materialLambda` and constructs the region-dependent macros `rho`, `cs`, `cp`, `mu`, and `lambda`; these derived definitions normally do not need to be edited.
+
+Set the Newmark-$\beta$ and time-stepping parameters:
+
+```cpp
+real tmax = 0.2,
+     t    = 0.0,
+     dt   = 0.002;
+
+real gamma = 0.5,
+     beta  = (1.0/4.0)*(gamma + 0.5)^2;
+```
+
+The time step partitions $[0,0.2]$ into 100 increments; including the initial state, the solver evaluates 101 time levels. As with every wave-propagation calculation, `dt` should be checked against the smallest mesh size and the largest wave velocity in the model.
+
+Specify the boundary label participating in the paraxial absorbing condition:
+
+```cpp
+int[int] PAlabels = [1];
+```
+
+The boundary labels in `PAlabels` are surface labels and are independent of the volume labels `11` and `22` used by `materialLabels`.
+
+#### 🌊 Step 4: Defining the double-couple Ricker source
+
+Please note the generated mesh already gaurantees the double-couple nodes are present in the mesh file. Place the four source points around the source center $(0,-2.8,-0.8)$:
+
+```cpp
+real[int] DcNorthPointCord = [ 0.00, -2.8, -0.79];
+real[int] DcSouthPointCord = [ 0.00, -2.8, -0.81];
+real[int] DcEastPointCord  = [-0.01, -2.8, -0.80];
+real[int] DcWestPointCord  = [ 0.01, -2.8, -0.80];
+```
+
+The source-time function is a Ricker wavelet,
+
+$$
+s(t)=A_0\left[1-2\pi^2f_0^2(t-t_0)^2\right]
+\exp\left[-\pi^2f_0^2(t-t_0)^2\right],
+$$
+
+with amplitude $A_0=10^{-3}$, central frequency $f_0=10$, and peak time $t_0=0.10$:
+
+```cpp
+real A0 = 1.e-3;
+real f0 = 10.0;
+real t0 = 0.10;
+
+macro DcNorthCondition()
+  A0*(1.0 - 2.0*pi*pi*f0*f0*(t-t0)*(t-t0)) *exp(-pi*pi*f0*f0*(t-t0)*(t-t0)) //
+macro DcSouthCondition()
+ -A0*(1.0 - 2.0*pi*pi*f0*f0*(t-t0)*(t-t0)) *exp(-pi*pi*f0*f0*(t-t0)*(t-t0)) //
+macro DcEastCondition()
+  A0*(1.0 - 2.0*pi*pi*f0*f0*(t-t0)*(t-t0)) *exp(-pi*pi*f0*f0*(t-t0)*(t-t0)) //
+macro DcWestCondition()
+ -A0*(1.0 - 2.0*pi*pi*f0*f0*(t-t0)*(t-t0)) *exp(-pi*pi*f0*f0*(t-t0)*(t-t0)) //
+```
+
+The alternating signs form two opposing dipoles: north-south and east-west. The four coordinates must identify vertices in the mesh; otherwise the
+double-couple degree-of-freedom lookup will report an error.
+
+#### ⚙️ Step 5: Solving the problem
+
+Run the simulation with four MPI processes:
+
+```bash
+PSD_Solve -np 4 Main.edp -v 0 -ns -nw
+```
+
+If `ThName` was not edited, provide the mesh at runtime instead:
+
+```bash
+PSD_Solve -np 4 Main.edp -mesh french_alps_two_volumes.msh -v 0 -ns -nw
+```
+
+#### 📊 Step 6: Postprocessing and visualization
+
+The `-postprocess uva` option writes displacement, velocity, and acceleration to the `VTUs` directory. Open the generated `.pvd` file in ParaView. Useful
+visualizations for this example include:
+
+- coloring the undeformed mesh by volume region to verify labels `11` and `22`;
+- plotting the displacement magnitude to observe transmission and reflection
+  at the material interface;
+- comparing wave speed and wavelength in the two materials;
+- clipping or slicing the three-dimensional domain through the source center;
+- applying a common color scale to several time instants.
+
+
+<figure style="text-align: center;">
+  <!-- First row -->
+  <img src="https://github.com/user-attachments/assets/4b3f427e-a004-4179-a609-fc46dcac4d0c" width="30%" alt="Warped displacement field at t0" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/13fc5f36-2390-40f2-bf21-4d76f6940caf" width="30%" alt="Warped displacement field at t4" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/c0023ea0-7560-4084-92f6-aa90250c4bea" width="30%" alt="Warped displacement field at t8">
+  <br>
+  <img src="https://github.com/user-attachments/assets/b7fd1dba-3702-405a-b385-eacb17404e08" width="30%" alt="Warped displacement field at t0" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/5f77265d-60f5-4aa1-aff3-c49c1e09fbfb" width="30%" alt="Warped displacement field at t4" style="margin-right:1%;">
+  <img src="https://github.com/user-attachments/assets/e1393f07-4211-4348-8ac2-b0df9dc81bde" width="30%" alt="Warped displacement field at t8">
+  <figcaption><em>Figure: Warped displacement field evolution — from left \(t_50, t_60, ..., t_{100}\).</em></figcaption>
+</figure>
+
+The expected result is a wave field originating from the four-point source and propagating through both volumes. Changes in density and wave velocity produce partial transmission and reflection at the interface, while the paraxial boundary reduces artificial reflections from the exterior surface.
+
+
 ## 📚 Additional Exercises
 
 These exercises are designed to deepen your understanding of the various features and numerical strategies available in PSD. They allow you to experiment with performance optimization, modeling approaches, and soildynamics enhancements.
