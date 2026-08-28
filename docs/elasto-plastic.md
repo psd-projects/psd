@@ -949,7 +949,7 @@ The constitutive return and strip-footing parameters follow:
 
 ---
 
-## Tutorial 5
+## Tutorial 4
 
 ### Drucker–Prager elasto-plasticity with MFront
 
@@ -1453,41 +1453,25 @@ awk '$1 ~ /^[0-9]+$/ &amp;&amp; NF == 5 {print $2,$3}' \
 
 With `-postprocess u`, PSD writes a `Solution.pvd` time series and one VTU file per settlement increment. Open `Solution.pvd` in ParaView and select `U` as the active vector field.
 
-A typical displacement visualisation can be produced as follows:
-
-1. Apply **Warp By Vector** and select `U` as **Vectors**.
-2. Increase the scale factor if the displacement is difficult to see; a factor
-   around 30 is suitable for the $10\times10$ benchmark domain.
-3. Colour by the displacement magnitude or by the vertical component.
-4. Select the desired time increment and export the screenshot.
-
-<!-- TODO: Add the Tutorial 5 ParaView images here. Suggested frames are
-     increments 1, 4, 8 and 12, using the same camera and colour range. -->
+A typical displacement visualisation as in tutorial 3 and same results are obtained here as well.
 
 ### Step 4: Validation curve
 
-Plot settlement from column 1 of `pressure_settlement_mfront.dat` against the normalised footing pressure from column 2. The MFront curve should be compared with
+Plot settlement from column 1 of `pressure_settlement_mfront.dat` against the normalised footing pressure from column 2. The MFront curve should be compared with the pressure–settlement curves from PSD (tutorial 3), PSD-Mfront (this tutorial)  and DOLFINx are visually and numerically coincident:
 
-* the native PSD result from Tutorial 3; and
-* the independent DOLFINx reference result.
+<figure style="text-align: center;">
+  <img src="_images/elasto-plastic/comp-dp-mfront.png" width="45%" alt="Validation of displacement movement of inner border">
+  <figcaption style="max-width: 600px; margin: 0 auto; font-style: italic;">
+    Figure: Normalized footing pressure from native PSD and the independent DOLFINx implementation.
+  </figcaption>
+</figure>
 
-All cases must use the same mesh, P2 displacement approximation, material parameters, 12 settlement increments and `FEQF5` quadrature. Changing any of these settings changes the comparison case.
-
-<!-- TODO: Add the Tutorial 5 pressure-settlement comparison figure here. -->
-
-For a numerical check, compare the pressure value at each of the 12 increments, not only the final value. A useful relative-difference measure is
-
-$$
-e_n=
-\frac{|q_n^{\mathrm{MFront}}-q_n^{\mathrm{reference}}|}
-     {|q_n^{\mathrm{reference}}|},
-\qquad
-e_{\max}=\max_n e_n.
-$$
-
-The existing implementation has been checked against both the native PSD and DOLFINx solutions. The curve and screenshots are intentionally left for this tutorial's final documentation update.
 
 ### References
 
 The theory and benchmark are the same as in Tutorial 3. See the references listed there for the strip-footing formulation and the independent implementation used for validation.For comparison with a different capped material model, see the MFront authors'
-[`DruckerPragerCap.mfront`](https://github.com/thelfer/MFrontGallery/blob/master/generic-behaviours/plasticity/DruckerPragerCap.mfront).
+
+* T. Helfer, MFrontGallery, [`DruckerPragerCap.mfront`](https://github.com/thelfer/MFrontGallery/blob/master/generic-behaviours/plasticity/DruckerPragerCap.mfront).
+* M. Čermák, S. Sysala, and J. Valdman, [*Efficient and flexible MATLAB implementation of 2D and 3D elastoplastic problems*](https://arxiv.org/abs/1805.04155), Applied Mathematics and Computation 355 (2019), 595–614;
+* the accompanying [`plasticity_DP_2D/constitutive_problem.m_implementation](https://github.com/matlabfem/matlab_fem_elastoplasticity/blob/master/plasticity/plasticity_DP_2D/constitutive_problem.m);
+* the [COMET-FEniCSx quadrature-state pattern](https://bleyerj.github.io/comet-fenicsx/tours/nonlinear_problems/plasticity/plasticity.html) for nonlinear plasticity assembly.

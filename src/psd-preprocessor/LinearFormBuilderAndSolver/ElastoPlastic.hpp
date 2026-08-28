@@ -722,12 +722,14 @@ for (int i=0; i<TlMaxItr; i++) {
   [IsvOld1,IsvOld2,IsvOld3,IsvOld4] = [Isv1,Isv2,Isv3,Isv4];
   endProcedure("state commit",t0)
 
+  // Calculate the footing reaction
   real reactionLocal = intN(Th,qforder=5)(
     [Sig11,Sig22,Sig12]'*epsilon(reactionTest));
   real reactionGlobal = 0.;
   mpiAllReduce(reactionLocal,reactionGlobal,mpiCommWorld,mpiSUM);
   real normalizedPressure = -reactionGlobal/(footingWidth*cohesion);
 
+  // --- screen output ---- //
   if(mpirank==0)
     cout.scientific << i+1 << "\t" << tl*maxSettlement << "\t"
          << normalizedPressure << "\t" << niter << "\t"
