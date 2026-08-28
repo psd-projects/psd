@@ -16,6 +16,27 @@ PSD’s parallel capabilities are based on a [**domain decomposition approach**]
 
 A **sequential version** of the solver is also available and does **not require PETSc**.
 
+## Citing PSD
+
+If you use PSD in your research, please cite the following paper:
+
+> Badri, M. A., Rastiello, G., & Foerster, E. (2026). PSD: Parallel Finite Element Solver for Continuum Dynamics. *Journal of Open Source Software, 11*(123), 9411. [https://doi.org/10.21105/joss.09411](https://doi.org/10.21105/joss.09411)
+
+```bibtex
+@article{Badri2026,
+  doi = {10.21105/joss.09411},
+  url = {https://doi.org/10.21105/joss.09411},
+  year = {2026},
+  publisher = {The Open Journal},
+  volume = {11},
+  number = {123},
+  pages = {9411},
+  author = {Badri, Mohd Afeef and Rastiello, Giuseppe and Foerster, Evelyne},
+  title = {PSD: Parallel Finite Element Solver for Continuum Dynamics},
+  journal = {Journal of Open Source Software}
+}
+```
+
 ## Features
 
 - 2D and 3D simulations
