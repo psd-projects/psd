@@ -8,8 +8,5 @@ solve:
 
 run: preprocess solve
 
-mfront:
-	source /home/mb258512/PSDInstall/mfront-env.sh
-
 clean:
 	@rm -rf *.edp *.data

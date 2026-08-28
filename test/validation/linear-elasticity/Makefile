@@ -40,8 +40,5 @@ gnuplot:
 
 run: run-plain-stress run-plain-strain gnuplot
 
-mfront:
-	source /home/mb258512/PSDInstall/mfront-env.sh
-
 clean:
 	@rm -rf  *.edp   *.data *.eps *.csv

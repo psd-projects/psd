@@ -35,8 +35,5 @@ run:
 	make  preprocess-varf-based && make solve
 	make gnuplot 
 
-mfront:
-	source /home/mb258512/PSDInstall/mfront-env.sh
-
 clean:
 	@rm -rf *.edp *.csv *.data *.eps
