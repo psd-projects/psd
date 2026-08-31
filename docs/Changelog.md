@@ -24,7 +24,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 ### Bug
 - Pseudo-nonlinear elasticity with non-homogenous Dirichlet boundary coditions fixed [#75](https://github.com/psd-projects/psd/pull/75)
 
-## [2.6](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.6) - 06-07-2026
+## [2.6](https://github.com/psd-projects/psd/releases/tag/v2.6) - 06-07-2026
 
 ### Added
 
@@ -54,7 +54,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 - SALOME is no longer compiled
 
 
-## [2.5](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.5) - 2023-05-12
+## [2.5](https://github.com/psd-projects/psd/releases/tag/v2.5) - 2023-05-12
 
 ### Added
 
@@ -96,7 +96,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 
 
 
-## [2.4](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.4) - 2022-07-20
+## [2.4](https://github.com/psd-projects/psd/releases/tag/v2.4) - 2022-07-20
 
 ### Added
 
@@ -142,7 +142,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 
 - Bug in `-plotreactionforce` when used with stress-based method has been removed.
 
-## [2.3](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.3) - 2021-09-13
+## [2.3](https://github.com/psd-projects/psd/releases/tag/v2.3) - 2021-09-13
 
 ### Added
 
@@ -160,7 +160,7 @@ PSD has been maturing and evolving with time, following subsections present the 
 - Bug in top-ii-vol meshing due to MPI communication removed.
 - Bug in  `pseudo_nonlinear` model for Elastodynamics/soildynamics fixed.
 
-## [2.2](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.2) - 2021-07-28
+## [2.2](https://github.com/psd-projects/psd/releases/tag/v2.2) - 2021-07-28
 ### Added
 
 - New and more verbose tutorials on fracture mechanics, soil-dynamics.
@@ -179,7 +179,7 @@ check NP=USER_PROCS`.
 - New checks for wrong flag. Now if wrong flag or values is entered PSD will give error.
 - Boolean flags now also accept value 1|0|yes|no|on|off|true|false for turning on or off.
 
-## [2.1](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.1) - 2021-01-27
+## [2.1](https://github.com/psd-projects/psd/releases/tag/v2.1) - 2021-01-27
 ### Added
 - New accurate force calculations via matrix-vector product: new flag `-getreactionforce`.
 - New flag `-reactionforce` variational-based | stress-based to get reaction force on a surface.
@@ -215,7 +215,7 @@ check NP=USER_PROCS`.
 
 
 
-## [2.0](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.0) - 2020-08-18
+## [2.0](https://github.com/psd-projects/psd/releases/tag/v2.0) - 2020-08-18
 ### Added
 - New processing via C++, `PSD_PreProcess` binary (MAJOR CHANGE).
 - New solving via shell wrapper `PSD_Solve` instead of `FreeFem++` or `FreeFem++-mpi`.
@@ -266,7 +266,7 @@ check NP=USER_PROCS`.
 
 
 
-## [1.8](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.8) - 2020-01-21
+## [1.8](https://github.com/psd-projects/psd/releases/tag/v1.8) - 2020-01-21
 ### Added
 - New soil dynamic module `-soildynamics`
 - New paraxial element support in 2D.
@@ -281,7 +281,7 @@ check NP=USER_PROCS`.
 - New way of maintaining a logfile for all simulations (date,time,case,..) in `simulation-log.csv`.
 
 
-## [1.7](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.7) - 2019-11-08
+## [1.7](https://github.com/psd-projects/psd/releases/tag/v1.7) - 2019-11-08
 ### Added
 - New  mesh reordering via Reverse Cuthill-Mackee via `-useRCM`.
 - New quasi-static parallel solver (Extension of B.Masseron & G.Rastiello sequential version).
@@ -298,7 +298,7 @@ check NP=USER_PROCS`.
 - Moved to FreeFEM 4.4.
 
 
-## [1.6](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.6) - 2019-06-11
+## [1.6](https://github.com/psd-projects/psd/releases/tag/v1.6) - 2019-06-11
 ### Added
 - Dynamic linear solver in 2D and 3D  parallel/sequential.
 - New finite element variable for partition of unity-- for fixing integrals.
@@ -316,7 +316,7 @@ check NP=USER_PROCS`.
 ### Bugs
 - Bug in integrals fixed.
 
-## [1.5](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.5) - 2019-05-29
+## [1.5](https://github.com/psd-projects/psd/releases/tag/v1.5) - 2019-05-29
 ### Added
 - Dynamic linear solver in 2D and 3D  sequential.
 - New meshes for dynamics tests `bar_dynamic.msh`.
@@ -334,7 +334,7 @@ check NP=USER_PROCS`.
 
 
 
-## [1.4](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.4) - 2019-05-14
+## [1.4](https://github.com/psd-projects/psd/releases/tag/v1.4) - 2019-05-14
 ### Added
 - Fully vectorial finite element solver for phase-field `-vectorial`.
 - New `-supercomp` for avoiding xterm issues on super computers.
@@ -345,7 +345,7 @@ check NP=USER_PROCS`.
 - Elastic energy decomposition is now optional `-energydecomp`.
 - Force calculation using integrals (Thanks to G.Rastiello).
 
-## [1.3](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.3) - 2019-04-08
+## [1.3](https://github.com/psd-projects/psd/releases/tag/v1.3) - 2019-04-08
 ### Added
 - New meshes in 2D/3D`Notched-plate` , `square-crack`, etc.
 - New fracture mechanics module.
@@ -365,7 +365,7 @@ check NP=USER_PROCS`.
 - Move to FreeFEM version 4.0.
 - Move to PETSc version 3.11.
 
-## [1.2](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.1) - 2019-03-18
+## [1.2](https://github.com/psd-projects/psd/releases/tag/v1.1) - 2019-03-18
 ### Added
 - Support for Gmsh's `.msh`  or Medit's `.mesh` meshes in folder `Meshes`.
 - Advance to 3D physics.
@@ -384,7 +384,7 @@ check NP=USER_PROCS`.
 - Moved manufactured solutions to `validation-test` folder.
 
 
-## [1.1](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.1) - 2019-03-04
+## [1.1](https://github.com/psd-projects/psd/releases/tag/v1.1) - 2019-03-04
 ### Added
 - Initial FreeFEM files for sequential linear elasticity in 2D (case of constrained bar).
 - More cases of manufactured solution for linear elasticity in 2D.
@@ -396,7 +396,7 @@ check NP=USER_PROCS`.
 - Separate folder of manufactured solutions and the linear elastic solver.
 - Move to FreeFEM version 3.61.
 
-## [1.0](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.0) - 2019-02-15
+## [1.0](https://github.com/psd-projects/psd/releases/tag/v1.0) - 2019-02-15
 ### Added
 - Initial FreeFEM files  Method of manufactured solution for linear elasticity in 2D.
 
@@ -404,18 +404,19 @@ check NP=USER_PROCS`.
 
 | Version                                                     | Git tag                                  |
 | ----------------------------------------------------------- | ---------------------------------------- |
-| [1.0](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.0) | 8a8ecb2746b7da792073358c60df33bae647f788 |
-| [1.1](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.1) | a667e6085ba1f92f8dd619bd40e18f85c593bc0a |
-| [1.2](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.2) | e48b7b3a30c05ad4c343efa6a17fee386031f437 |
-| [1.3](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.3) | 39f4324550365849852c5264b8d4535aae05e30d |
-| [1.4](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.4) | f51f678630eb9b2fed355e5cedf976ce8b5fa341 |
-| [1.5](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.5) | 07293ba09a69d3d6a16278220a0b4a7a9f318f96 |
-| [1.6](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.6) | f359dd049fb1ddde376e8ad8e5177c663e430418 |
-| [1.7](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.7) | aee9bfec868a70b3d9974d7692bc19f9739ab7dc |
-| [1.8](https://gitlab.com/PsdSolver/psd_sources/-/tree/v1.8) | 2f26292636c7248133e31ae912ee58113de2ef71 |
-| [2.0](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.0) | 1e1a4d7f10df30d106b52eba1c5caf69e8bc0f36 |
-| [2.1](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.1) | 8b9d84f25aedbd684eb0f06cdd4ffbbf9a60a0e2 |
-| [2.2](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.2) | 5e0368f990d505d3bf1960122cb99a23e08567b0 |
-| [2.3](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.3) | 0744b19fbe7da6d523754092e92f3882b57f0760 |
-| [2.4](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.4) | 3dea315606ab98b95d18b84fa0c3afa01acc6e54 |
-| [2.5](https://gitlab.com/PsdSolver/psd_sources/-/tree/v2.5) | c60778c3e5133109ba8d670493d8e886e6aa1782 |
+| [1.0](https://github.com/psd-projects/psd/releases/tag/v1.0) | 8a8ecb2746b7da792073358c60df33bae647f788 |
+| [1.1](https://github.com/psd-projects/psd/releases/tag/v1.1) | a667e6085ba1f92f8dd619bd40e18f85c593bc0a |
+| [1.2](https://github.com/psd-projects/psd/releases/tag/v1.2) | e48b7b3a30c05ad4c343efa6a17fee386031f437 |
+| [1.3](https://github.com/psd-projects/psd/releases/tag/v1.3) | 39f4324550365849852c5264b8d4535aae05e30d |
+| [1.4](https://github.com/psd-projects/psd/releases/tag/v1.4) | f51f678630eb9b2fed355e5cedf976ce8b5fa341 |
+| [1.5](https://github.com/psd-projects/psd/releases/tag/v1.5) | 07293ba09a69d3d6a16278220a0b4a7a9f318f96 |
+| [1.6](https://github.com/psd-projects/psd/releases/tag/v1.6) | f359dd049fb1ddde376e8ad8e5177c663e430418 |
+| [1.7](https://github.com/psd-projects/psd/releases/tag/v1.7) | aee9bfec868a70b3d9974d7692bc19f9739ab7dc |
+| [1.8](https://github.com/psd-projects/psd/releases/tag/v1.8) | 2f26292636c7248133e31ae912ee58113de2ef71 |
+| [2.0](https://github.com/psd-projects/psd/releases/tag/v2.0) | 1e1a4d7f10df30d106b52eba1c5caf69e8bc0f36 |
+| [2.1](https://github.com/psd-projects/psd/releases/tag/v2.1) | 8b9d84f25aedbd684eb0f06cdd4ffbbf9a60a0e2 |
+| [2.2](https://github.com/psd-projects/psd/releases/tag/v2.2) | 5e0368f990d505d3bf1960122cb99a23e08567b0 |
+| [2.3](https://github.com/psd-projects/psd/releases/tag/v2.3) | 0744b19fbe7da6d523754092e92f3882b57f0760 |
+| [2.4](https://github.com/psd-projects/psd/releases/tag/v2.4) | 3dea315606ab98b95d18b84fa0c3afa01acc6e54 |
+| [2.5](https://github.com/psd-projects/psd/releases/tag/v2.5) | c60778c3e5133109ba8d670493d8e886e6aa1782 |
+| [2.6](https://github.com/psd-projects/psd/releases/tag/v2.6) | 944d2763a4f67b266beaf427a912ba1d2ac298be |
