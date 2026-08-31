@@ -369,8 +369,8 @@ if(   PostProcess=="u"   || PostProcess=="v"   || PostProcess=="a"   || PostProc
   cout << "                                                                   " << endl;
 
 if(versionpsd){
-  cout << "  PSD Version 2.6 " << endl;
-  cout << "    Copyright (C) CEA 2019 - 2025 "<< endl;
+  cout << "  PSD Version 2.7 " << endl;
+  cout << "    Copyright (C) CEA 2019 - 2026 "<< endl;
   cout << "                                                                   " << endl;
   cout << "    This is free software; see the source for copying conditions.  " << endl;
   cout << "    There is NO warranty; not even for MERCHANTABILITY or FITNESS  " << endl;
